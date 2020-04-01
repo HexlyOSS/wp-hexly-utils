@@ -1,0 +1,6 @@
+.hexly-content-control .hc-prop-label,
+.hexly-content-control input,
+.hexly-content-control textarea { 
+  display: block;
+  width: 100%;
+}
