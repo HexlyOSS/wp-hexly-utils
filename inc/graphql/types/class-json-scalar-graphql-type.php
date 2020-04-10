@@ -71,5 +71,4 @@ class JsonScalarGraphQL extends ScalarType
 
 add_action( 'graphql_register_types' /*'init_graphql_type_registry'*/, function( $type_registry ) {
   $type_registry->register_type( 'JSON', new JsonScalarGraphQL());
-  Hexly::info('registered!');
 });
