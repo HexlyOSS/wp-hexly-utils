@@ -18,8 +18,13 @@ class HexlyUtilsPlugin {
   }
 
   function __construct() {
+    $this->register_dependencies();
     $this->early_register();
     add_action( 'plugins_loaded', [$this, 'standard_register']);
+  }
+
+  function register_dependencies(){
+    require 'vendor/autoload.php';
   }
 
   function early_register(){

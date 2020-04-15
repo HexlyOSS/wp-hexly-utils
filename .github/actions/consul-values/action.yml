@@ -1,0 +1,39 @@
+name: 'Consul Values'
+description: 'A Github Action that will pull k/v from consul and use as values for a mustache.js template'
+inputs:
+  url:
+    description: 'Agent address'
+    reqiured: true
+  port:
+    description: 'Agent Port'
+    required: true
+  secure:
+    description: 'Use HTTPS for agent communication'
+    required: false
+    default: true
+  ca:
+    description: 'Custom CA cert for Consul if needed'
+    require: false
+  datacenter:
+    description: 'Consul datacenter to use'
+    required: false
+    default: 'dc1'
+  key:
+    description: 'Consul key path to use'
+    required: true
+  token:
+    description: 'Consul Token to use for accessing the index'
+    required: false
+  template:
+    description: 'Template file to parse'
+    required: true
+  out:
+    description: 'Path to write the parsed template to'
+    required: false
+    deafault: '<input.template>.parsed'
+  extras:
+    description: 'Additional values to be used'
+    required: false
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

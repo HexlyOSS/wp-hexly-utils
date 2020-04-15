@@ -1,0 +1,6 @@
+{
+  "require": {
+      "gmostafa/php-graphql-client": "^1.4",
+      "apache/log4php": "2.3.0"
+  }
+}
