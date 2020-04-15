@@ -2,7 +2,7 @@
 /*
 Plugin Name: Hexly Utils
 Description:
-Version: 0.1.0-local
+Version: 0.1.__build-number__
 */
 
 define( 'HEXLY_UTIL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
