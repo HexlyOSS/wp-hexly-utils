@@ -1,0 +1,18 @@
+{
+  "name": "Hexly Wordpress Utils",
+  "slug": "wp-hexly-utils",
+  "download_url": "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/wp-hexly-utils-{{ .VERSION }}.zip",
+  "homepage": "https://hexly.io",
+  "upgrade_notice": "",
+  "sections": {
+    "description": "Hexly Wordpress Utilities",
+    "changelog": "Not terribly interesting on it's own."
+  },
+  "icons": {
+    "1x": "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/logo128.png",
+    "2x": "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/logo256.png"
+  },
+  "version": "{{ .VERSION }}",
+  "author": "Hexly, LLC",
+  "author_homepage": "https://hexly.io"
+}
