@@ -8,11 +8,11 @@ name: Build and deploy
 env:
   PROJECT: wp-hexly-utils
   PLUGIN_FILE: wp-hexly-utils.php
+  S3_DESTINATION_DIR: s3://plugins.hexly.cloud/wp/plugins
 
 jobs:
   build:
     name: Build
-    # needs: prepare
     runs-on: ubuntu-latest
 
     steps:
@@ -51,3 +51,4 @@ jobs:
         echo "Here we go: $ZIP $BASE_DIR $PLUGIN $BUILD_VERSION"
         bash build/zip.sh "$ZIP" "$BASE_DIR" "$PLUGIN" "$BUILD_VERSION"
         echo "Done building?"
+        aws s3 cp "$ZIP" "s3://plugins.hexly.cloud/wp/plugins/$PROJECT"
