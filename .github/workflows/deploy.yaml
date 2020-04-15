@@ -51,5 +51,6 @@ jobs:
 
         sed -i -e "s/{{ \.ZIP_FILE }}/$ZIP_FILE/g" build/update-meta.json
         sed -i -e "s/{{ \.PROJECT }}/$PROJECT/g" build/update-meta.json
+        sed -i -e "s/{{ \.VERSION }}/$BUILD_VERSION/g" build/update-meta.json
         cat build/update-meta.json
         aws s3 cp --acl public-read build/update-meta.json "s3://plugins.hexly.cloud/wp/plugins/$PROJECT/update-meta.json"
