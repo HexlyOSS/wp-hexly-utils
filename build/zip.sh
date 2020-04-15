@@ -1,10 +1,10 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: build/zip.sh [cwd] [version]"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: build/zip.sh [cwd] [project] [version]"
     exit 1
 fi
 
-echo "Zipping $2 from $1"
-zip -qq -r "./wp-hexly-utils-$2.zip" $1 -x \*.git\* -x \*build\* -x \*composer.*\*
+echo "Zipping to $2 to $1"
+zip -qq -r "$1" "$2" -x \*.git\* -x \*build\* -x \*composer.*\*
 echo "Zipped!"

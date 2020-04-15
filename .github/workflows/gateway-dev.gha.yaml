@@ -6,27 +6,9 @@ on:
 name: Build and deploy
 
 jobs:
-
-  # prepare:
-  #   name: Prepare Package
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     build_version:
-  #       description: The version to set the plugin and filename to
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v1
-
-  #   - name: Generate Build Number
-  #     id: gen-build-num
-  #     env:
-  #       REF: ${{ github.ref }}
-  #       BUILD_NUMBER: ${{ github.run_number }}
-  #     run: |
-  #       VERSION=$(cat wp-hexly-utils.php | grep "Version:" -m1 | awk '{print $2}' | sed "s/__build-number__/foobar/")
-  #       echo "::set-output name=build_version::$VERSION"
-
-
+  env:
+    PROJECT: wp-hexly-utils
+    PLUGIN_FILE: wp-hexly-utils.php
   build:
     name: Build
     # needs: prepare
@@ -42,7 +24,7 @@ jobs:
         REF: ${{ github.sha }}
         BUILD_NUMBER: ${{ github.run_number }}
       run: |
-        CMD="cat wp-hexly-utils.php | grep 'Version:' -m1 | awk '{print \$2}' | sed -e 's/__build-number__/$BUILD_NUMBER.${REF::8}/'"
+        CMD="cat $PLUGIN_FILE | grep 'Version:' -m1 | awk '{print \$2}' | sed -e 's/__build-number__/$BUILD_NUMBER.${REF::8}/'"
         echo "Running $CMD"
         VERSION=$(bash -c "$CMD")
         echo "::set-output name=build_version::$VERSION"
@@ -59,21 +41,11 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           BUILD_VERSION: ${{ steps.gen-build-num.outputs.build_version }}
       run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
-        # echo '@hexly:registry=https://npm.pkg.github.com/' >> .npmrc
-        # echo $GITHUB_PACKAGE_AUTH >> .npmrc
-
-        sed -i -e "s/Version: .*__build-number__/Version: ${BUILD_VERSION}/" ./wp-hexly-utils.php
-        cat ./wp-hexly-utils.php
+        sed -i -e "s/Version: .*__build-number__/Version: ${BUILD_VERSION}/" ./$PLUGIN_FILE
+        cat ./$PLUGIN_FILE
         aws s3 ls
         ls -alh
         BASE_DIR=$(pwd)
-        echo "Zipping ${BUILD_VERSION} from $BASE_DIR"
-        bash build/zip.sh "$BASE_DIR" "${BUILD_VERSION}"
+        echo "Here we go: $BASE_DIR/$PLUGIN/$BUILD_VERSION.zip $BASE_DIR $PLUGIN $BUILD_VERSION"
+        bash build/zip.sh "$BASE_DIR/$PLUGIN/$BUILD_VERSION.zip" "$BASE_DIR" "$PLUGIN" "$BUILD_VERSION"
         echo "Done building?"
-
-    # - uses: montudor/action-zip@v0.1.0
-    #   with:
-    #     args: zip -qq -r ./wp-hexly-utils.zip ./dir
