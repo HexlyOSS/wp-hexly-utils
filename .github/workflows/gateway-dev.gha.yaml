@@ -69,8 +69,9 @@ jobs:
         cat ./wp-hexly-utils.php
         aws s3 ls
         ls -alh
-        echo "Zipping ${BUILD_VERSION}"
-        bash build/zip.sh $(pwd) "${BUILD_VERSION}"
+        BASE_DIR=$(pwd)
+        echo "Zipping ${BUILD_VERSION} from $BASE_DIR"
+        bash build/zip.sh "$BASE_DIR" "${BUILD_VERSION}"
         echo "Done building?"
 
     # - uses: montudor/action-zip@v0.1.0
