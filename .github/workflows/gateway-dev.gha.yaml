@@ -20,11 +20,19 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1
 
+    - name: Composer install
+      uses: docker://composer:1.9.1
+      with:
+        args: install
+
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REF: ${{ github.sha }}
+          BUILD_ID: ${{ github.run_id }}
+          BUILD_NUMBER: ${{ github.run_number }}
       run: |
         # Build a docker container and
         # push it to ECR so that it can
@@ -32,6 +40,6 @@ jobs:
         # echo '@hexly:registry=https://npm.pkg.github.com/' >> .npmrc
         # echo $GITHUB_PACKAGE_AUTH >> .npmrc
 
-        sed -i -e "s/0.1.0-local/${REF}/g" ./wp-hexly-utils.php
+        sed -i -e "s/0.1.0-local/${REF}-${BUILD_ID}-${BUILD_NUMBER}/g" ./wp-hexly-utils.php
         cat ./wp-hexly-utils.php
         aws s3 ls
