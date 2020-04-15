@@ -39,10 +39,10 @@ jobs:
     - name: Generate Build Number
       id: gen-build-num
       env:
-        REF: ${{ github.ref }}
+        REF: ${{ github.sha }}
         BUILD_NUMBER: ${{ github.run_number }}
       run: |
-        CMD="cat wp-hexly-utils.php | grep 'Version:' -m1 | awk '{print \$2}' | sed -e 's/__build-number__/$BUILD_NUMBER.$REF/'"
+        CMD="cat wp-hexly-utils.php | grep 'Version:' -m1 | awk '{print \$2}' | sed -e 's/__build-number__/$BUILD_NUMBER.${REF::8}/'"
         echo "Running $CMD"
         VERSION=$(bash -c "$CMD")
         echo "::set-output name=build_version::$VERSION"
