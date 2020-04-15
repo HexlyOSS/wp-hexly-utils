@@ -65,12 +65,12 @@ jobs:
         # echo '@hexly:registry=https://npm.pkg.github.com/' >> .npmrc
         # echo $GITHUB_PACKAGE_AUTH >> .npmrc
 
-        sed -i -e "s/Version: .*__build-number__/${BUILD_VERSION}/" ./wp-hexly-utils.php
+        sed -i -e "s/Version: .*__build-number__/Version: ${BUILD_VERSION}/" ./wp-hexly-utils.php
         cat ./wp-hexly-utils.php
         aws s3 ls
         ls -alh
         echo "Zipping ${BUILD_VERSION}"
-        bash build/zip.sh "$(cwd)" "${BUILD_VERSION}"
+        bash build/zip.sh $(pwd) "${BUILD_VERSION}"
         echo "Done building?"
 
     # - uses: montudor/action-zip@v0.1.0
