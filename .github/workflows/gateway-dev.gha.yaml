@@ -8,6 +8,7 @@ name: Build and deploy
 jobs:
   Build:
     name: Build
+    runs-on: ubuntu-latest
 
     steps:
     - name: Test
@@ -21,7 +22,6 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
-      uses: HexlyOSS/action-aws-cli@v1.1
       env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
