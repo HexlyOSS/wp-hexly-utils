@@ -3,10 +3,9 @@
 Plugin Name: Hexly Utils
 Description:
 Version: 0.1.__build-number__
-
-Version: 0.1.__build-number__
 */
 
+// define( 'HEXLY_UTIL_PLUGIN_VERSION', '__BUILD_VERSION__');
 define( 'HEXLY_UTIL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'HEXLY_UTIL_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
