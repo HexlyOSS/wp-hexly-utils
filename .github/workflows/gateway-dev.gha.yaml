@@ -5,10 +5,11 @@ on:
 
 name: Build and deploy
 
+env:
+  PROJECT: wp-hexly-utils
+  PLUGIN_FILE: wp-hexly-utils.php
+
 jobs:
-  env:
-    PROJECT: wp-hexly-utils
-    PLUGIN_FILE: wp-hexly-utils.php
   build:
     name: Build
     # needs: prepare
@@ -46,6 +47,7 @@ jobs:
         aws s3 ls
         ls -alh
         BASE_DIR=$(pwd)
-        echo "Here we go: $BASE_DIR/$PLUGIN/$BUILD_VERSION.zip $BASE_DIR $PLUGIN $BUILD_VERSION"
-        bash build/zip.sh "$BASE_DIR/$PLUGIN/$BUILD_VERSION.zip" "$BASE_DIR" "$PLUGIN" "$BUILD_VERSION"
+        ZIP="$BASE_DIR/$PLUGIN/$BUILD_VERSION.zip"
+        echo "Here we go: $ZIP $BASE_DIR $PLUGIN $BUILD_VERSION"
+        bash build/zip.sh "$ZIP" "$BASE_DIR" "$PLUGIN" "$BUILD_VERSION"
         echo "Done building?"
