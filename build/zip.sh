@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: build/zip.sh [cwd] [project] [version]"
+if [ "$#" -lt 2 ]; then
+    echo "Usage: build/zip.sh <zip_file> <cwd> [project] [version]"
     exit 1
 fi
 
