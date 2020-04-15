@@ -1,7 +1,7 @@
 {
   "name": "Hexly Wordpress Utils",
   "slug": "wp-hexly-utils",
-  "download_url": "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/wp-hexly-utils-{{ .VERSION }}.zip",
+  "download_url": "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/{{ .PROJECT }}/{{ .ZIP_FILE }}",
   "homepage": "https://hexly.io",
   "upgrade_notice": "",
   "sections": {
