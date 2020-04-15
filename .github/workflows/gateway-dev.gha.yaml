@@ -6,30 +6,49 @@ on:
 name: Build and deploy
 
 jobs:
-  Build:
+
+  # prepare:
+  #   name: Prepare Package
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     build_version:
+  #       description: The version to set the plugin and filename to
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v1
+
+  #   - name: Generate Build Number
+  #     id: gen-build-num
+  #     env:
+  #       REF: ${{ github.ref }}
+  #       BUILD_NUMBER: ${{ github.run_number }}
+  #     run: |
+  #       VERSION=$(cat wp-hexly-utils.php | grep "Version:" -m1 | awk '{print $2}' | sed "s/__build-number__/foobar/")
+  #       echo "::set-output name=build_version::$VERSION"
+
+
+  build:
     name: Build
+    # needs: prepare
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
       uses: actions/checkout@v1
 
-    - name: Composer install
-      uses: docker://composer:1.9.1
-      with:
-        args: install
-
     - name: Generate Build Number
       id: gen-build-num
       env:
         REF: ${{ github.ref }}
         BUILD_NUMBER: ${{ github.run_number }}
-      outputs:
-        build_version:
-          description: The version to set the plugin and filename to
       run: |
         VERSION=$(cat wp-hexly-utils.php | grep "Version:" -m1 | awk '{print $2}' | sed "s/__build-number__/foobar/")
         echo "::set-output name=build_version::$VERSION"
+
+    - name: Composer install
+      uses: docker://composer:1.9.1
+      with:
+        args: install
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
