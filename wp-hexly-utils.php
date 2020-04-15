@@ -3,6 +3,8 @@
 Plugin Name: Hexly Utils
 Description:
 Version: 0.1.__build-number__
+
+Version: 0.1.__build-number__
 */
 
 define( 'HEXLY_UTIL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -41,3 +43,5 @@ class HexlyUtilsPlugin {
 }
 
 add_action( 'plugins_loaded', [ 'HexlyUtilsPlugin', 'get_instance' ], 1 );
+
+// Version: 123

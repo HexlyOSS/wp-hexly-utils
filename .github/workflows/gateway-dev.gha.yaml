@@ -11,12 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Test
-      id: echo-test
-      run: |
-        echo "Check out my $AWS_ACCESS_KEY_ID"
-        echo "Done"
-
     - name: Checkout
       uses: actions/checkout@v1
 
@@ -25,14 +19,24 @@ jobs:
       with:
         args: install
 
+    - name: Generate Build Number
+      id: gen-build-num
+      env:
+        REF: ${{ github.ref }}
+        BUILD_NUMBER: ${{ github.run_number }}
+      outputs:
+        build_version:
+          description: The version to set the plugin and filename to
+      run: |
+        VERSION=$(cat wp-hexly-utils.php | grep "Version:" -m1 | awk '{print $2}' | sed "s/__build-number__/foobar/")
+        echo "::set-output name=build_version::$VERSION"
+
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REF: ${{ github.ref }}
-          BUILD_ID: ${{ github.run_id }}
-          BUILD_NUMBER: ${{ github.run_number }}
+          BUILD_VERSION: ${{ steps.gen-build-num.outputs.build_version }}
       run: |
         # Build a docker container and
         # push it to ECR so that it can
@@ -40,6 +44,12 @@ jobs:
         # echo '@hexly:registry=https://npm.pkg.github.com/' >> .npmrc
         # echo $GITHUB_PACKAGE_AUTH >> .npmrc
 
-        sed -i -e "s/__build-number__/${BUILD_NUMBER}-${REF}/g" ./wp-hexly-utils.php
+        sed -i -e "s/Version: .*__build-number__/${BUILD_VERSION}/" ./wp-hexly-utils.php
         cat ./wp-hexly-utils.php
         aws s3 ls
+        ls -alh
+        echo "Built ${BUILD_VERSION}"
+
+    # - uses: montudor/action-zip@v0.1.0
+    #   with:
+    #     args: zip -qq -r ./wp-hexly-utils.zip ./dir
