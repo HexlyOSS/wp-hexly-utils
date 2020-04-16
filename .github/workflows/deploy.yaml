@@ -25,7 +25,7 @@ jobs:
         REF: ${{ github.sha }}
         BUILD_NUMBER: ${{ github.run_number }}
       run: |
-        CMD="cat $PLUGIN_FILE | grep 'Version:' -m1 | awk '{print \$2}' | sed -e 's/__build-number__/$BUILD_NUMBER.${REF::8}/'"
+        CMD="cat $PLUGIN_FILE | grep 'Version:' -m1 | awk '{print \$2}' | sed -e 's/__build-number__/$BUILD_NUMBER/'"
         echo "Running $CMD"
         VERSION=$(bash -c "$CMD")
         echo "::set-output name=build_version::$VERSION"
