@@ -1,5 +1,6 @@
 {
   "require": {
+      "yahnis-elsts/plugin-update-checker": "4.9",
       "gmostafa/php-graphql-client": "^1.4",
       "apache/log4php": "2.3.0"
   }
