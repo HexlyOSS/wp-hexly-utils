@@ -43,10 +43,10 @@ jobs:
           BUILD_VERSION: ${{ steps.gen-build-num.outputs.build_version }}
       run: |
         sed -i -e "s/Version: .*__build-number__/Version: ${BUILD_VERSION}/" ./$PLUGIN_FILE
-        BASE_DIR=$(pwd)
+        BASE_DIR="$(pwd)"
         ZIP_FILE="$PROJECT-$BUILD_VERSION.zip"
-        ZIP="$BASE_DIR/$PLUGIN/$ZIP_FILE"
-        bash build/zip.sh "$ZIP" "$BASE_DIR" "$PLUGIN" "$BUILD_VERSION"
+        ZIP="$BASE_DIR/$ZIP_FILE"
+        bash build/zip.sh "$ZIP" "$BASE_DIR" "$PROJECT" "$BUILD_VERSION"
         aws s3 cp --acl public-read "$ZIP" "s3://plugins.hexly.cloud/wp/plugins/$PROJECT/$ZIP_FILE"
 
         sed -i -e "s/{{ \.ZIP_FILE }}/$ZIP_FILE/g" build/update-meta.json
