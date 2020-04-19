@@ -15,7 +15,7 @@ add_action( 'graphql_process_http_request_response', function($response, $result
 
       $error = $err->getMessage();
       $trace = explode("\n", $err->getTraceAsString());
-      Hexly::warn("GraphQL Error at $error\n\nGraphQL Path:\n$path", $trace);
+      Hexly::warn("GraphQL Error encountered: $error\n\nGraphQL Path:\n$path", $trace);
     }
   }
 }, 10, 5 );
