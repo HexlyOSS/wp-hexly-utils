@@ -3,10 +3,22 @@
 class HexlyParseUtils {
 
   public static function parseFloat($val, $default = null){
-    return is_numeric($val) ? floatval($val) : $default == null ? null : floatval($default);
+    if(is_numeric($val)){
+      return floatval($val);
+    }else if($default == null){
+      return $default;
+    }else{
+      return floatval($default);
+    }
   }
-
+  
   public static function parseInt($val, $default = null){
-    return is_numeric($val) ? intval($val) : $default == null ? null : intval($default);
+    if(is_numeric($val)){
+      return intval($val);
+    }else if($default == null){
+      return $default;
+    }else{
+      return intval($default);
+    }
   }
 }
