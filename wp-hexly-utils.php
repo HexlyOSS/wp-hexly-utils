@@ -24,6 +24,16 @@ class HexlyUtilsPlugin {
     $this->register_dependencies();
     $this->early_register();
     add_action( 'plugins_loaded', [$this, 'standard_register']);
+    add_filter( 'hexly_utils_auto_update', [$this, 'autoupdater']);
+  }
+
+  function autoupdater($arr){
+    $arr[] = [
+      'https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/wp-hexly-utils/update-meta.json',
+      HEXLY_UTIL_PLUGIN_FILE,
+      'wp-hexly-utils'
+    ];
+    return $arr;
   }
 
   function register_dependencies(){
@@ -32,7 +42,9 @@ class HexlyUtilsPlugin {
 
   function early_register(){
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/class-hexly.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-utils-updater.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-parse-utils.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-generic-sidebars.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-customizer.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-wc-templater.php');
   }
@@ -40,7 +52,6 @@ class HexlyUtilsPlugin {
   function standard_register(){
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-handlers.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-types.php');
-    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-utils-updater.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-roles.php'); // TODO clean me up!
     // most things can be done here
   }
