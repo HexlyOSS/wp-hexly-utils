@@ -34,6 +34,7 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/class-hexly.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-parse-utils.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-customizer.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-wc-templater.php');
   }
 
   function standard_register(){
