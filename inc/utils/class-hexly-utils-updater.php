@@ -2,7 +2,7 @@
 class HexlyUtilsAutoUpdater {
 
   function __construct(){
-    add_action('wp', [$this, 'hexly_utils_auto_update']);
+    add_action('init', [$this, 'hexly_utils_auto_update']);
   }
 
   function hexly_utils_auto_update(){
@@ -17,8 +17,4 @@ class HexlyUtilsAutoUpdater {
 }
 
 new HexlyUtilsAutoUpdater();
-
-
-
-
 ?>
