@@ -58,5 +58,3 @@ class HexlyUtilsPlugin {
 }
 
 add_action( 'plugins_loaded', [ 'HexlyUtilsPlugin', 'get_instance' ], 1 );
-
-// Version: 123
