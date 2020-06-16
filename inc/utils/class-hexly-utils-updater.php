@@ -11,7 +11,17 @@ class HexlyUtilsAutoUpdater {
     foreach($plugins as $p){
       [$url, $path, $name] = $p;
       Hexly::debug('registering plugin for auto-update', [$url, $path, $name]);
-      Puc_v4_Factory::buildUpdateChecker($url, $path, $name);
+      $checker = Puc_v4_Factory::buildUpdateChecker($url, $path, $name);
+      $current = $checker->getInstalledVersion();
+      $is_local = strpos($current, '__build-number__') >= 0;
+
+      if( $is_local && !defined('HEXLY_LOCAL_UPDATE_FORCE_ENABLED') ){
+        $checker->resetUpdateState();
+        add_filter( $checker->getUniqueName('request_update_result'), function($obj){
+          Hexly::debug('rejecting local update', $obj);
+          return null;
+        }, 1, 1);
+      }
     }
   }
 }
