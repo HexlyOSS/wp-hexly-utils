@@ -13,7 +13,7 @@ class HexlyUtilsAutoUpdater {
       Hexly::debug('registering plugin for auto-update', [$url, $path, $name]);
       $checker = Puc_v4_Factory::buildUpdateChecker($url, $path, $name);
       $current = $checker->getInstalledVersion();
-      $is_local = strpos($current, '__build-number__') >= 0;
+      $is_local = is_numeric(strpos($current, '__build-number__'));
 
       if( $is_local && !defined('HEXLY_LOCAL_UPDATE_FORCE_ENABLED') ){
         $checker->resetUpdateState();
