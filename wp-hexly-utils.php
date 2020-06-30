@@ -25,6 +25,12 @@ class HexlyUtilsPlugin {
     $this->early_register();
     add_action( 'plugins_loaded', [$this, 'standard_register']);
     add_filter( 'hexly_utils_auto_update', [$this, 'autoupdater']);
+    add_action( 'woocommerce_data_stores', [$this, 'init_data_stores']);
+  }
+
+  function init_data_stores ( $data_stores ) {
+    $data_stores['order-item-hx_order_item_discount'] = 'HX_Order_Item_Discount_Data_Store';
+    return $data_stores;
   }
 
   function autoupdater($arr){
@@ -42,6 +48,7 @@ class HexlyUtilsPlugin {
 
   function early_register(){
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/class-hexly.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/orders/items/class-hx-order-item-discount.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-utils-updater.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-parse-utils.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-generic-sidebars.php');
@@ -55,8 +62,11 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-roles.php'); // TODO clean me up!
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-admin-ui.php');
     // most things can be done here
-  }
 
+    add_filter( HexlyWcTemplater::PATHS_FILTER_KEY, function($paths){
+      return array_merge( [ HEXLY_UTIL_PLUGIN_PATH ], $paths );
+    }, 10, 1);
+  }
 }
 
 add_action( 'plugins_loaded', [ 'HexlyUtilsPlugin', 'get_instance' ], 1 );
