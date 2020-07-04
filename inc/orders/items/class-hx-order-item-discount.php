@@ -202,6 +202,23 @@ add_action( 'woocommerce_order_after_calculate_totals', function($and_taxes, $or
   $order->save();
 }, 10, 2);
 
+
+add_filter( 'woocommerce_get_order_item_totals', function( $rows, $order ) {
+  $idx = array_search( 'order_total', array_keys($rows));
+  $dcs = $order->get_items('hx_order_item_discount');
+  foreach( $dcs as $item ){
+    $amount = $item->get_amount() ?? 0;
+    $name = $item->get_name();
+    $price = wc_price( $amount, ['currency' => $order->get_currency()] );
+    array_splice($rows, $idx, 0, [[
+      'label' => $name,
+      'value' => $price,
+    ]]);
+  }
+  return $rows;
+}, 10, 2 );
+
+
 add_action('woocommerce_admin_order_totals_after_discount', function($id){
   $order = wc_get_order($id);
   $items = $order->get_items('hx_order_item_discount');
