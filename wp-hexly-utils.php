@@ -51,6 +51,7 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/orders/items/class-hx-order-item-discount.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-utils-updater.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-parse-utils.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-scheduler.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-generic-sidebars.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-customizer.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-wc-templater.php');
