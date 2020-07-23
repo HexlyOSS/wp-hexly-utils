@@ -49,6 +49,7 @@ class HexlyUtilsPlugin {
   function early_register(){
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/class-hexly.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/orders/items/class-hx-order-item-discount.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hx-wp-plugin.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-utils-updater.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-parse-utils.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-scheduler.php');

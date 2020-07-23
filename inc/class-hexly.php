@@ -23,6 +23,9 @@ class Hexly {
     }
 
     error_log("[$file:$line] [hexly:$level] $message $printr");
+    if( !defined('HEXLY_PLUGIN_URL') ){
+      return;
+    }
     $log = Logger::getLogger('hexly-logger');
 
     switch($level) {
