@@ -89,7 +89,7 @@ class Hexly {
 
   public static function dbpr($message, ...$args) {
     $debug = array_map( function($bt){
-      return $bt['file'] . ':' . $bt['line'];
+      return ($bt['file'] ?? '<source_not_found> ') . ':' . ($bt['line'] ?? '??');
     }, debug_backtrace());
 
     Hexly::doLog('dbpr', $message, $debug, ...$args);
