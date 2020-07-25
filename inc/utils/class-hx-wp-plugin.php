@@ -4,11 +4,12 @@ require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 class HX_WP_Plugin {
 
   private static $details_cache = null;
+  private static $last_instance = null;
   private static $instance_cache = [];
 
   private $plugin;
 
-  static function init_plugin($PLUGIN, $bootstrap, $bv){
+  static function init_plugin($PLUGIN, $bootstrap, $bv, $activation = false){
     $plugin = preg_replace('/(.*)\/wp-hexly-(.*).php/', '$1/class-hx-$2-plugin.php', $bootstrap);
 
     self::$details_cache = [
@@ -21,6 +22,14 @@ class HX_WP_Plugin {
     ];
     include_once( $plugin );
     self::$details_cache = null;
+    $instance = self::$last_instance;
+
+    if( $instance ){
+      if( $activation ){
+        $instance->on_activate();
+      }
+      self::$last_instance = null;
+    }
   }
 
   final function __construct(){
@@ -30,6 +39,7 @@ class HX_WP_Plugin {
       throw new Exception('Should not ever let this happen!');
     }else{
       self::$instance_cache[$class] = $this;
+      self::$last_instance = $this;
     }
 
     $this->plugin = (object) self::$details_cache;
@@ -44,6 +54,20 @@ class HX_WP_Plugin {
     foreach( ($this->includes ?? []) as $include ){
       include_once( $this->get_path() . $include);
     }
+  }
+
+  function on_activate(){}
+
+  function auto_update($key){
+    $bootstrap = $this->plugin->bootstrap;
+    add_filter( 'hexly_utils_auto_update', function() use ($key, $bootstrap){
+      $results = [ "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/$key/update-meta.json", $bootstrap, $key ];
+      return [$results];
+    });
+  }
+
+  function data_stores($stores) {
+    return $stores;
   }
 
   function get_path(){
