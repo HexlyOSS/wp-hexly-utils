@@ -60,9 +60,9 @@ class HX_WP_Plugin {
 
   function auto_update($key){
     $bootstrap = $this->plugin->bootstrap;
-    add_filter( 'hexly_utils_auto_update', function() use ($key, $bootstrap){
-      $results = [ "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/$key/update-meta.json", $bootstrap, $key ];
-      return [$results];
+    add_filter( 'hexly_utils_auto_update', function($results) use ($key, $bootstrap){
+      $results[] = [ "https://s3-us-west-2.amazonaws.com/plugins.hexly.cloud/wp/plugins/$key/update-meta.json", $bootstrap, $key ];
+      return $results;
     });
   }
 
