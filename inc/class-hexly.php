@@ -1,11 +1,6 @@
 <?php
 
 
-if( class_exists('Hexly') ){
-  // error_log('wp-hexly could not register class Hexly; already exists');
-  return;
-}
-
 class Hexly {
   private static function doLog($level, $message, ...$args) {
     $debug = debug_backtrace()[1];
@@ -22,10 +17,6 @@ class Hexly {
       $printr = $printr . "\n===[start:  $itr]===\n\n" . print_r($arg, true) . "\n\n===[finish: $itr]===\n";
     }
 
-    error_log("[$file:$line] [hexly:$level] $message $printr");
-    if( !defined('HEXLY_PLUGIN_URL') ){
-      return;
-    }
     $log = Logger::getLogger('hexly-logger');
 
     switch($level) {
@@ -147,6 +138,72 @@ class Hexly {
   //   return;
   // }
 }
+
+if( class_exists('Logger') && interface_exists('LoggerConfigurator') ){
+
+  class HX_Error_Logger extends LoggerAppender {
+
+    public function close() {
+      if($this->closed != true) {
+        if(!$this->firstAppend) {
+          echo $this->layout->getFooter();
+        }
+      }
+      $this->closed = true;
+    }
+
+    public function append(LoggerLoggingEvent $event) {
+      if($this->layout !== null) {
+
+        $text = $this->layout->format($event);
+
+        // if ($this->htmlLineBreaks) {
+        //   $text = nl2br($text);
+        // }
+        error_log($text);
+      }
+    }
+
+  }
+
+  class HX_Log_Configurator implements LoggerConfigurator {
+    public function configure(LoggerHierarchy $hierarchy, $input = null) {
+      $root = $hierarchy->getRootLogger();
+
+      $format = '[ uri = %server{REQUEST_URI} ][ level = %level ] %msg';
+      $stderr_layout = new \LoggerLayoutPattern();
+      $stderr_layout->setConversionPattern($format);
+      $stderr_layout->activateOptions();
+
+      $stderr = new \HX_Error_Logger();
+      $stderr->setThreshold('info');
+      $stderr->setLayout($stderr_layout);
+      $stderr->activateOptions();
+      $root->addAppender($stderr);
+
+      $file_layout = new \LoggerLayoutPattern();
+      $file_layout->setConversionPattern("%d{Y-m-d H:i:s}$format%n");
+      $file_layout->activateOptions();
+
+      $file = new LoggerAppenderRollingFile('hexly-logger');
+      $file->setFile(wp_upload_dir()['basedir'] . '/logs/hexly-plugin/hexly-plugin.log');
+      $file->setAppend(true);
+      $file->setThreshold($_ENV["LOG_LEVEL"] ?? 'info');
+
+      $file->setMaxFileSize("10MB");
+      $file->setMaxBackupIndex(30);
+      $file->setCompress(true);
+      $file->setLayout($file_layout);
+      $file->activateOptions();
+      $root->addAppender($file);
+    }
+  }
+  Logger::configure(null, 'HX_Log_Configurator');
+}else{
+  Hexly::warn('No logger configuration specified!');
+}
+
+
 
 set_error_handler(function($errno, $errstr, $errfile, $errline ){
   Hexly::dbpr("Unhandled Error errno=$errno at " . $errfile . ':' . $errline, $errstr);
