@@ -24,6 +24,7 @@ class Hexly {
         $log->error("[$file:$line] $message $printr");
         break;
       case "error":
+      case "dbpr":
         $log->error("[$file:$line] $message $printr");
         break;
       case "debug":
