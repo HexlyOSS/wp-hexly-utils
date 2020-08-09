@@ -64,6 +64,7 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-types.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-roles.php'); // TODO clean me up!
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-admin-ui.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/tables/class-hx-list-table.php');
     // most things can be done here
 
     add_filter( HexlyWcTemplater::PATHS_FILTER_KEY, function($paths){
