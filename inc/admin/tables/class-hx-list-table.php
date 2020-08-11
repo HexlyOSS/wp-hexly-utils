@@ -33,8 +33,8 @@ abstract class HX_List_Table extends WP_List_Table {
 		$current_page          = absint( $this->get_pagenum() );
 		$per_page              = apply_filters( 'hx_smartship_table_per_page_' . get_class($this), 50 );
 
-		$order_col = $_GET['orderby'] ?? null;
-		$order_dir = $_GET['order'] ?? 'asc';
+		$order_col = $_REQUEST['orderby'] ?? null;
+		$order_dir = $_REQUEST['order'] ?? 'asc';
 
     [$this->items, $this->max_items] = $this->get_data($current_page, $per_page, $order_dir, $order_col);
 
@@ -46,24 +46,31 @@ abstract class HX_List_Table extends WP_List_Table {
 	}
 
 	public function display() {
-
-		$this->handle_table_actions();
-
 		$this->before_form();
 		$this->form_open();
 		parent::display();
 		$this->form_close();
 		$this->after_form();
+
 	}
 
-	protected function handle_table_actions(){
-		if ( !array_key_exists('action', $_GET) ){
+	public function handle_table_actions(){
+		if ( !array_key_exists('action', $_REQUEST) ){
 			return;
 		}
 
-		$action = $_GET['action'];
+		$param = $this->get_cb_parameter(null);
+		if ( !array_key_exists($param, $_REQUEST) ){
+			return;
+		}
+
+		// get our IDs, and ensure they're in an array
+		$ids = $_REQUEST[$param];
+		$ids = is_array($ids) ? $ids : [$ids];
+
+		$action = $_REQUEST['action'];
 		if( method_exists( $this, 'action_' . $action ) ){
-			call_user_func([$this, 'action_' . $action ]);
+			call_user_func([$this, 'action_' . $action ], $ids);
 		}else {
 			Hexly::info('HX_List_Table [type=' . get_class($this) . '] has no method [missing=action_' . $action . ']');
 		}
@@ -73,7 +80,7 @@ abstract class HX_List_Table extends WP_List_Table {
 
 	protected function form_open(){
 		do_action('hx_util_list_table_before_form', $this);
-		echo '<form class="hx-list-table class-' . get_class($this) . '" method="get">';
+		echo '<form class="hx-list-table class-' . get_class($this) . '" method="post">';
 		echo '<input type="hidden" name="page" value="' . $_REQUEST['page'] . '" />';
 		do_action('hx_util_list_table_before_inside_form', $this);
 	}
@@ -89,8 +96,8 @@ abstract class HX_List_Table extends WP_List_Table {
 	public function column_cb( $row ) {
 
 		$id = $this->get_cb_value($row);
-		if( !empty($id) ){
-			$name = $this->get_cb_parameter($row);
+		if( $row === null || !empty($id) ){
+			$name = $this->get_cb_parameter($row, 'html-input');
 			return '<input name="' . $name . '" type="checkbox" value="' . esc_attr( $id ) .'" />';
 		}
 	}
@@ -121,10 +128,12 @@ abstract class HX_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 * What do we name the parameter in the $_GET results
+	 * What do we name the parameter in the $_REQUEST results
+	 * @param $row - mixed; nullable; the row of the table, or null if not in context of the table
+	 * @param $format - string; nullable; the context being used in (html-input for the element's ID tag)
 	 */
-	public function get_cb_parameter($row){
-		return 'ids[]';
+	public function get_cb_parameter($row, $format=null){
+		return 'ids' . ($format=='html-input' ? '[]' : '' );
 	}
 
 }
