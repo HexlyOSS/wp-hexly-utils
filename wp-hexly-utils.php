@@ -56,6 +56,7 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-scheduler.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-generic-sidebars.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-customizer.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/configs/abstract-hx-custom-post-type-admin-config.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-wc-templater.php');
   }
 

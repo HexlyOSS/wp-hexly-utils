@@ -20,18 +20,23 @@ abstract class HX_List_Table extends WP_List_Table {
 		_e( "No $label found.", 'hx_util' );
 	}
 
-	// public function column_default( $item, $column_name ) {
-	// 	if( method_exists( $this, $column_name ) ){
-	// 		call_user_func([$this, $column_name ], $item);
-	// 	}else {
-	// 		echo "No column found: <strong>$column_name</strong>";
-	// 	}
-	// }
+	public function single_row( $item ) {
+		try {
+			ob_start();
+			[$columns] = $this->get_column_info();
+			parent::single_row($item);
+		}catch(Error $err){
+			ob_end_clean();
+			$span = count($columns);
+			echo "<tr><td colspan=\"$span\"> Received an error processing this row. Please see the logs </td></tr>";
+			Hexly::info('Failed to process row due to Error: ' . $err->getMessage(), $item);
+		}
+	}
 
 	public function prepare_items() {
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
 		$current_page          = absint( $this->get_pagenum() );
-		$per_page              = apply_filters( 'hx_smartship_table_per_page_' . get_class($this), 50 );
+		$per_page              = apply_filters( 'hx_list_table_per_page_' . get_class($this), 5 );
 
 		$order_col = $_REQUEST['orderby'] ?? null;
 		$order_dir = $_REQUEST['order'] ?? 'asc';
