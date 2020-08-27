@@ -23,6 +23,8 @@ class Hexly {
       case "panic":
         $log->error("[$file:$line] $message $printr");
         break;
+      case "warn":
+      case "warning":
       case "error":
       case "dbpr":
         $log->error("[$file:$line] $message $printr");

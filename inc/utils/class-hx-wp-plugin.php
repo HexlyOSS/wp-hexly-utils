@@ -47,6 +47,7 @@ class HX_WP_Plugin {
   }
 
   function init(){
+    add_action('woocommerce_data_stores', [$this, 'data_stores'], 9, 1);
     $this->auto_include();
   }
 
