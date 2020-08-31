@@ -148,7 +148,7 @@ if( class_exists('Logger') && interface_exists('LoggerConfigurator') ){
 
     public function close() {
       if($this->closed != true) {
-        if(!$this->firstAppend) {
+        if( !empty($this->firstAppend ?? null) ) {
           echo $this->layout->getFooter();
         }
       }
