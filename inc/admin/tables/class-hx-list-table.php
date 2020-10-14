@@ -26,6 +26,7 @@ abstract class HX_List_Table extends WP_List_Table {
 	}
 
 	public function single_row( $item ) {
+		$this->before_row($item);
 		try {
 			ob_start();
 			[$columns] = $this->get_column_info();
@@ -36,6 +37,7 @@ abstract class HX_List_Table extends WP_List_Table {
 			echo "<tr><td colspan=\"$span\"> Received an error processing this row. Please see the logs </td></tr>";
 			Hexly::info('Failed to process row due to Error: ' . $err->getMessage(), $item);
 		}
+		$this->after_row($item);
 	}
 
 	public function prepare_items() {
@@ -55,16 +57,20 @@ abstract class HX_List_Table extends WP_List_Table {
 		]);
 	}
 
+	protected function bulk_actions( $which = '' ) {
+		parent::bulk_actions($which);
+	}
+
 	public function display() {
 		$this->before_form();
 		$this->form_open();
 		parent::display();
 		$this->form_close();
 		$this->after_form();
-
 	}
 
 	public function handle_table_actions(){
+		// Hexly::info('handle actions', $_REQUEST);
 		if ( !array_key_exists('action', $_REQUEST) ){
 			return;
 		}
@@ -79,13 +85,121 @@ abstract class HX_List_Table extends WP_List_Table {
 		$ids = is_array($ids) ? $ids : [$ids];
 
 		$action = $_REQUEST['action'];
+		// Hexly::info('handle actions', $ids);
 		if( method_exists( $this, 'action_' . $action ) ){
 			call_user_func([$this, 'action_' . $action ], $ids);
 		}else {
 			Hexly::info('HX_List_Table [type=' . get_class($this) . '] has no method [missing=action_' . $action . ']');
 		}
 	}
-	protected function before_form(){ }
+
+	protected function before_form(){
+		$params = $_GET;
+		$path = $_SERVER['SCRIPT_NAME'] . '?';
+
+		echo '<form method="GET" action="'. $path . '">';
+		foreach($_GET as $key => $value ){
+			echo '<input type="hidden" name="' . $key . '" value="' . $value .'">';
+		}
+
+		echo '<div class="tablenav top">';
+
+		$this->show_search();
+		$this->show_filters();
+		echo '</div>';
+		echo '</form><!--findme-->';
+	}
+
+  function show_search(){
+    // $url = admin_url( 'admin-ajax.php' ) . '?action=hx_loyalty_file_form&redirect=' . urlencode($_SERVER['REQUEST_URI']);
+		$search = $_REQUEST['s'] ?? '';
+    ?>
+    <p class="search-box">
+      <label class="screen-reader-text" for="post-search-input">Search:</label>
+      <input type="search" id="post-search-input" name="s" value="<?php echo $search ?>">
+      <input type="submit" id="search-submit" class="button" value="Search"></p>
+    </p>
+    <?php
+  }
+
+	function get_filters(){
+		return [];
+	}
+
+	function show_filters(){
+		$filters = $this->get_filters();
+		if (empty($filters)) {
+				return;
+		}
+		echo '<div class="alignleft actions">';
+
+		foreach($filters as $f){
+			// echo '<input type="text" name="foofilter"></input>';
+			switch ($f['type']) {
+				case 'customer':
+						$this->render_customer_picker($f);
+						break;
+
+					case 'date_range':
+						$this->render_date_range_picker($f);
+						break;
+
+				default:
+						echo "Error: not sure how to handle " . $f['type'];
+						break;
+			}
+		}
+		submit_button( __( 'Filter' ), '', 'filter_request', false, array( 'id' => 'post-query-submit' ) );
+		echo '</div><div style="clear: both"></div>';
+	}
+
+	function render_date_range_picker($f) {
+		$start = $_GET['_filter_date_range_start'] ?? '';
+		$end = $_GET['_filter_date_range_end'] ?? '';
+		?>
+		<input type="text"
+			class="date-picker"
+			name="_filter_date_range_start"
+			maxlength="10"
+			value="<?php echo empty($start) ? '' : esc_attr( date_i18n( 'Y-m-d', strtotime( $start ) ) ); ?>"
+			pattern="<?php echo esc_attr( apply_filters( 'woocommerce_date_input_html_pattern', '[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])' ) ); ?>" />
+		<input type="text"
+			class="date-picker"
+			name="_filter_date_range_end"
+			maxlength="10"
+			value="<?php echo empty($end) ? '' : esc_attr( date_i18n( 'Y-m-d', strtotime( $end ) ) ); ?>"
+			pattern="<?php echo esc_attr( apply_filters( 'woocommerce_date_input_html_pattern', '[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])' ) ); ?>" />
+		<?php
+	}
+
+	function render_customer_picker($f) {
+		$user_string = '';
+		$user_id     = '';
+
+		if ( ! empty( $_GET['_customer_user'] ) ) { // phpcs:disable WordPress.Security.NonceVerification.Recommended
+			$user_id = absint( $_GET['_customer_user'] ); // WPCS: input var ok, sanitization ok.
+			$user    = get_user_by( 'id', $user_id );
+
+			$user_string = sprintf(
+				/* translators: 1: user display name 2: user ID 3: user email */
+				esc_html__( '%1$s (#%2$s &ndash; %3$s)', 'woocommerce' ),
+				$user->display_name,
+				absint( $user->ID ),
+				$user->user_email
+			);
+		}
+		?>
+		<select
+			class="wc-customer-search"
+			id="customer_user"
+			name="_customer_user"
+			data-placeholder="<?php esc_attr_e( 'Customer', 'woocommerce' ); ?>"
+			data-allow_clear="true">
+			<option value="<?php echo esc_attr( $user_id ); ?>" selected="selected"><?php echo htmlspecialchars( wp_kses_post( $user_string ) ); // htmlspecialchars to prevent XSS when rendered by selectWoo. ?><option>
+		</select>
+		<?php
+	}
+
 	protected function after_form(){ }
 
 	protected function form_open(){
@@ -99,6 +213,14 @@ abstract class HX_List_Table extends WP_List_Table {
 		do_action('hx_util_list_table_after_inside_form', $this);
 		echo '</form>';
 		do_action('hx_util_list_table_after_form', $this);
+	}
+
+	function before_row($item){
+		do_action('hx_util_list_table_before_row', $item, $this);
+	}
+
+	function after_row($item){
+		do_action('hx_util_list_table_before_after', $item, $this);
 	}
 
   protected abstract function get_data($current_page, $per_page, $order_by, $order_col);

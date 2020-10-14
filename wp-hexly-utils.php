@@ -58,13 +58,13 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-customizer.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/configs/abstract-hx-custom-post-type-admin-config.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/themes/class-hexly-wc-templater.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-admin-ui.php');
   }
 
   function standard_register(){
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-handlers.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-types.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-roles.php'); // TODO clean me up!
-    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-admin-ui.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/tables/class-hx-list-table.php');
     // most things can be done here
 
