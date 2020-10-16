@@ -43,7 +43,9 @@ abstract class HX_List_Table extends WP_List_Table {
 	public function prepare_items() {
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
 		$current_page          = absint( $this->get_pagenum() );
-		$per_page              = apply_filters( 'hx_list_table_per_page_' . get_class($this), 5 );
+
+		$per_page = $_GET['per_page'];
+		$per_page              = is_numeric($per_page) ? intval($per_page) : apply_filters( 'hx_list_table_per_page_' . get_class($this), 50 );
 
 		$order_col = $_REQUEST['orderby'] ?? null;
 		$order_dir = $_REQUEST['order'] ?? 'asc';
@@ -123,7 +125,9 @@ abstract class HX_List_Table extends WP_List_Table {
   }
 
 	function get_filters(){
-		return [];
+		return [
+			['type' => 'per_page']
+		];
 	}
 
 	function show_filters(){
@@ -142,6 +146,10 @@ abstract class HX_List_Table extends WP_List_Table {
 
 					case 'date_range':
 						$this->render_date_range_picker($f);
+						break;
+
+					case 'per_page':
+						$this->render_per_page($f);
 						break;
 
 				default:
@@ -169,6 +177,29 @@ abstract class HX_List_Table extends WP_List_Table {
 			maxlength="10"
 			value="<?php echo empty($end) ? '' : esc_attr( date_i18n( 'Y-m-d', strtotime( $end ) ) ); ?>"
 			pattern="<?php echo esc_attr( apply_filters( 'woocommerce_date_input_html_pattern', '[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])' ) ); ?>" />
+		<?php
+	}
+
+	function render_per_page($f){
+		$per_page = $_GET['per_page'];
+		$per_page = is_numeric($per_page) ? intval($per_page) : apply_filters( 'hx_list_table_per_page_' . get_class($this), 50 );
+		?>
+		<label class="page-size-picker">
+			<select
+				id="per_page"
+				name="per_page"
+				class='hx-select2'
+				data-placeholder="Page Size"
+				data-allow_clear="true">
+				<option value="<?php echo $per_page ?>" selected="selected"><?php echo $per_page ?><option>
+				<?php foreach([5,10,25,50,100,250,500,1000] as $max_size): ?>
+					<?php if($max_size !== $per_page): ?>
+						<option value="<?php echo $max_size ?>"><?php echo $max_size ?><option>
+					<?php endif; ?>
+				<?php endforeach; ?>
+
+			</select>
+		</label>
 		<?php
 	}
 

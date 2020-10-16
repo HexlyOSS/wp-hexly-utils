@@ -1,0 +1,5 @@
+.post-type-product .tablenav .page-size-picker > .select2-container,
+.post-type-shop_order .tablenav .page-size-picker > .select2-container
+{
+  width: 100px !important;
+}
