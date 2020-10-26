@@ -44,8 +44,8 @@ abstract class HX_List_Table extends WP_List_Table {
 		$this->_column_headers = array( $this->get_columns(), array(), $this->get_sortable_columns() );
 		$current_page          = absint( $this->get_pagenum() );
 
-		$per_page = $_GET['per_page'];
-		$per_page              = is_numeric($per_page) ? intval($per_page) : apply_filters( 'hx_list_table_per_page_' . get_class($this), 50 );
+		$per_page = $_GET['per_page'] ?? null;
+		$per_page = is_numeric($per_page) ? intval($per_page) : apply_filters( 'hx_list_table_per_page_' . get_class($this), 50 );
 
 		$order_col = $_REQUEST['orderby'] ?? null;
 		$order_dir = $_REQUEST['order'] ?? 'asc';
@@ -181,7 +181,7 @@ abstract class HX_List_Table extends WP_List_Table {
 	}
 
 	function render_per_page($f){
-		$per_page = $_GET['per_page'];
+		$per_page = $_GET['per_page'] ?? null;
 		$per_page = is_numeric($per_page) ? intval($per_page) : apply_filters( 'hx_list_table_per_page_' . get_class($this), 50 );
 		?>
 		<label class="page-size-picker">
