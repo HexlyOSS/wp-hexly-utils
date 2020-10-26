@@ -19,7 +19,7 @@ class HexlyAdminUi {
 			wp_register_style('jquery-ui', '//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css');
 			wp_enqueue_style('jquery-ui');
 
-			wp_enqueue_script('hx-utils-js', HEXLY_UTIL_PLUGIN_URL . 'assets/admin/js/hx-utils.js');
+			wp_enqueue_script('hx-utils-js', HEXLY_UTIL_PLUGIN_URL . 'assets/admin/js/hx-utils.js', ['select2', 'selectWoo'], null);
 			wp_enqueue_style('hx-utils-css', HEXLY_UTIL_PLUGIN_URL . 'assets/admin/css/hx-utils.css');
 		}
 	}
