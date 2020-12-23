@@ -6,6 +6,9 @@ class HexlyUtilsAutoUpdater {
   }
 
   function hexly_utils_auto_update(){
+    if( !is_admin() ){
+      return;
+    }
     $plugins = apply_filters('hexly_utils_auto_update', []);
 
     foreach($plugins as $p){

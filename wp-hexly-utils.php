@@ -50,6 +50,7 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/class-hexly.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/queries/class-hx-wc-query-overrides.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/audit/class-hx-audit-config.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/coupons/class-hx-gift-item-coupon.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/orders/items/class-hx-order-item-discount.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hx-wp-plugin.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hexly-utils-updater.php');
@@ -63,6 +64,7 @@ class HexlyUtilsPlugin {
   }
 
   function standard_register(){
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/payments/class-hx-payment-gateway-visibility.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-handlers.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/graphql/class-hexly-graphql-types.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/admin/class-hexly-roles.php'); // TODO clean me up!
