@@ -38,6 +38,20 @@ class HX_Gift_Item_Coupon {
 
     // maybe woocommerce_coupon_is_valid at macro level?
     add_filter('woocommerce_coupon_get_discount_amount', [$this, 'filter_amount'], 10, 5);
+    
+    // Make sure our gift coupons dont apply to NON-GIFT items
+    add_filter('hx_coupon_applied_to_product', [$this, 'apply_coupon'], 10, 3);
+  }
+
+  function apply_coupon($applies, $li, $coupon){
+    $is_gift_coupon = $coupon->get_meta(self::META_KEY, true);
+    if(!empty($is_gift_coupon)){
+      $gift_item_coupon = $li->get_meta(self::ORDER_ITEM_META_COUPON, true);
+      if($coupon->get_code() !== $gift_item_coupon){
+        return false;
+      }
+    }
+    return $applies;
   }
 
   function copy_metadata_to_order_item($oi, $cid, $ci, $order ){
