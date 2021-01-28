@@ -15,7 +15,17 @@ class HexlyUtilsPlugin {
   private static $instance;
   public static function get_instance() {
     if ( null == self::$instance ) {
-      self::$instance = new HexlyUtilsPlugin();
+      try { 
+        self::$instance = new HexlyUtilsPlugin();
+      }catch(Throwable $err){
+        error_log( "Failed loading plugin: \n" . print_r($err, true));
+        add_action('admin_notices', function() use ($err){
+          echo '<div class="error notice">';
+          echo '<p>' . _e( 'Hexly Utils encountered an error: ', 'hexly' ). $err->getMessage() . '</p>';
+          echo '</div>';
+        });
+        return null;
+      }
     }
     return self::$instance;
   }
