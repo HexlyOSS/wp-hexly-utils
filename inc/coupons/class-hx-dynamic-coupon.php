@@ -70,10 +70,12 @@ class HX_Dynamic_Coupon {
 
   function action_woocommerce_checkout_order_processed() {
     Hexly::info('action_woocommerce_checkout_order_processed()');
+    // TODO: Send message to hexly that the coupon code was used
   }
 
   function action_woocommerce_removed_coupon($coupon_code) {
     Hexly::info('action_woocommerce_removed_coupon() $coupon_code', $coupon_code);
+    // TODO: Send message to hexly that the coupon code was not used? (May not be necessary)
   }
 
 }
