@@ -9,11 +9,10 @@ class HX_Dynamic_Coupon {
   }
 
   function filter_woocommerce_get_shop_coupon_data($false, $data){
-    Hexly::info('$data', $data);
     global $hexly_fed_graphql;
 
     try {
-      $res = $hexly_fed_graphql->execute(<<<QUERY
+      $res = $hexly_fed_graphql->exec(<<<QUERY
         query couponSearch(\$input: CouponSearchInput!) {
           comp {
             couponSearch(input: \$input) {
@@ -25,20 +24,20 @@ class HX_Dynamic_Coupon {
           }
         }
       QUERY, [ 'input' => [ 'code' => $data ] ]);
-      Hexly::info('$res', $res);
+      $res_data = $res->comp->couponSearch;
+      $res_is_empty = empty($res_data);
+
+      if ($res_is_null) {
+        return false;
+      }
     } catch (\Throwable $th) {
       echo $th->xdebug_message;
-      // Hexly::panic('Graphql Error!', $th->xdebug_message);
+      Hexly::panic('Graphql Error!');
     }
 
-    $mock_res = (object)[
-      'code' => $data,
-      'amount' => 100
-    ];
-
     $new_coupon = [
-      'code' => $mock_res->code,
-      'amount' => $mock_res->amount,
+      'code' => $res_data->code,
+      'amount' => $res_data->amount,
       'date_created' => null,
       'date_modified' => null,
       'date_expires' => null,
