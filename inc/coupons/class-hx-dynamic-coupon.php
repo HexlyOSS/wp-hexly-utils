@@ -18,7 +18,7 @@ class HX_Dynamic_Coupon {
             couponSearch(input: \$input) {
               id
               amount
-              name
+              code
               expiration
             }
           }
@@ -42,7 +42,7 @@ class HX_Dynamic_Coupon {
       'date_modified' => null,
       'date_expires' => null,
       'discount_type' => 'fixed_cart',
-      'description' => '',
+      'description' => 'description',
       'usage_count' => 0,
       'individual_use' => false,
       'product_ids' => array(),
