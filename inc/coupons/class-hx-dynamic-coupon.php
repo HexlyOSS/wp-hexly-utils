@@ -4,7 +4,7 @@
 class HX_Dynamic_Coupon {
   public function __construct() {
     add_filter('woocommerce_get_shop_coupon_data', [$this, 'filter_woocommerce_get_shop_coupon_data'], 10, 2);
-    add_action('woocommerce_checkout_order_processed', [$this, 'action_woocommerce_checkout_order_processed']);
+    add_action('woocommerce_thankyou', [$this, 'action_woocommerce_thankyou']);
     add_action('woocommerce_removed_coupon', [$this, 'action_woocommerce_removed_coupon']);
   }
 
@@ -68,9 +68,38 @@ class HX_Dynamic_Coupon {
     return $new_coupon;
   }
 
-  function action_woocommerce_checkout_order_processed() {
-    Hexly::info('action_woocommerce_checkout_order_processed()');
-    // TODO: Send message to hexly that the coupon code was used
+  function action_woocommerce_thankyou($order_id) {
+    global $hexly_fed_graphql;
+
+    $order_just_processed = new WC_Order($order_id);
+    $order_coupons = $order_just_processed->get_coupons();
+    $order_coupon_codes = [];
+    foreach ($order_coupons as $coupon) {
+      array_push($order_coupon_codes, $coupon->get_code());
+    }
+
+    $no_codes_used = empty($order_coupon_codes);
+    if ($no_codes_used) {
+      return;
+    }
+
+    try {
+      $res = $hexly_fed_graphql->exec(<<<QUERY
+        mutation couponUsed(\$input: CouponUsedInput!) {
+          comp {
+            couponUsed(input: \$input) {
+              id
+              amount
+              code
+              expiration
+            }
+          }
+        }
+      QUERY, [ 'input' => [ 'codes' => $order_coupon_codes ] ]);
+    } catch (\Throwable $th) {
+      echo $th->xdebug_message;
+      Hexly::panic('Graphql mutation Error!');
+    }
   }
 
   function action_woocommerce_removed_coupon($coupon_code) {
