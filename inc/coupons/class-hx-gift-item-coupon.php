@@ -10,6 +10,7 @@ class HX_Gift_Item_Coupon {
 
   const ORDER_META_COUPON_SETTINGS = '_hx_coupons_gift_item';
   const ORDER_ITEM_META_COUPON = '_hx_coupons_gift_item_coupon';
+  const VARIABLE_PRODUCT_TYPE = 'variable';
 
   public function __construct() {
     add_filter('woocommerce_hidden_order_itemmeta', [$this, 'filter_order_item_meta'], 10, 1);
@@ -41,6 +42,50 @@ class HX_Gift_Item_Coupon {
     
     // Make sure our gift coupons dont apply to NON-GIFT items
     add_filter('hx_coupon_applied_to_product', [$this, 'apply_coupon'], 10, 3);
+
+    // Coupon Variations
+    add_action('woocommerce_applied_coupon', [$this, 'action_woocommerce_applied_coupon']);
+  }
+
+  function action_woocommerce_applied_coupon($coupon_code) {
+    $coupon = new WC_Coupon($coupon_code);
+    $coupon_metadata = $coupon->get_meta_data();
+    $gift_item_id;
+
+    foreach ($coupon_metadata as $md) {
+      $_data = $md->get_data();
+      if ($_data['key'] == self::META_KEY) {
+        $gift_item_id = $_data['value'];
+      }
+    }
+
+    if (empty($gift_item_id)) {
+      Hexly::warn('No ' . self::META_KEY . ' found!');
+      return;
+    }
+
+    $product = wc_get_product($gift_item_id);
+    $product_type = $product->get_type();
+
+    if ($product_type != self::VARIABLE_PRODUCT_TYPE) {
+      return;
+    }
+
+    $product_children = $product->get_children();
+    if (empty($product_children)) {
+      Hexly::warn("No children found for product #$gift_item_id!");
+      return;
+    }
+
+    $children_names;
+    foreach ($product_children as $pc) {
+      $pc_object = wc_get_product($pc);
+      // error_log(print_r(['$pc_object' => $pc_object], true));
+      $children_names[] = $pc_object->get_name();
+    }
+
+    echo '<h1>---Here---</h1>';
+    error_log(print_r(['$children_names' => $children_names], true));
   }
 
   function apply_coupon($applies, $li, $coupon){
