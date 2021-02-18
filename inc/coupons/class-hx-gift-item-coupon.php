@@ -80,12 +80,82 @@ class HX_Gift_Item_Coupon {
     $children_names;
     foreach ($product_children as $pc) {
       $pc_object = wc_get_product($pc);
-      // error_log(print_r(['$pc_object' => $pc_object], true));
-      $children_names[] = $pc_object->get_name();
+      $children_names[] = ['name' => $pc_object->get_name(), 'id' => $pc_object->get_id()];
     }
 
-    echo '<h1>---Here---</h1>';
-    error_log(print_r(['$children_names' => $children_names], true));
+    $this->render_modal($children_names);
+  }
+
+  function render_modal($children_names) {
+    // echo '<h1>';
+    //   foreach ($children_names as $name) {
+    //     echo "<div>$name</div>";
+    //   }
+    // echo '</h1>';
+    ?>
+      <script>
+        const childrenNames = <?php echo json_encode($children_names); ?>;
+        console.log({ childrenNames });
+        const overlay = jQuery('<div id="modal-overlay"></div>');
+        const modal = jQuery('<div id="modal"></div>');
+        const modalHeader = jQuery('<div id="modal-header">Please Select One</div>');
+        const modalForm = jQuery('<form id="modal-form"></form>');
+        const contentHTML = childrenNames.map(el => {
+          return `<p><input id="form-input-${el.id}" type="radio" name="size" value="${el.id}"></input><label for="form-input-${el.id}">${el.name}</label></p>`;
+        }).join('');
+        const formContent = jQuery(`<div id="form-content">${contentHTML}</div>`);
+        const formSubmit = jQuery(`<button id="form-submit">Submit</button>`);
+        jQuery(document).ready(function() {
+          jQuery('body').append(overlay);
+          jQuery('#modal-overlay').append(modal);
+          jQuery('#modal').append(modalHeader);
+          jQuery('#modal').append(modalForm);
+          jQuery('#modal-form').append(formContent);
+          jQuery('#modal-form').append(formSubmit);
+          jQuery('#modal-form').submit(function(e) {
+            e.preventDefault();
+            const checkedField = jQuery('#modal-form input:checked').first().val();
+            
+            if (checkedField === undefined) {
+              return;
+            }
+            console.log({ checkedField });
+          });
+        }); 
+      </script>
+      <style>
+        #modal-overlay {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: fixed; 
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,.5);
+          z-index: 20000;
+        }
+
+        #modal {
+          background: white;
+          opacity: 1;
+          border-radius: 14px;
+          width: 400px;
+          height: 300px;
+        }
+
+        #modal-header {
+          color: white;
+          background: darkgray;
+        }
+
+        #form-content {
+
+        }
+
+      </style>
+    <?php
   }
 
   function apply_coupon($applies, $li, $coupon){
