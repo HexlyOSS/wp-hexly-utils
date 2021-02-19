@@ -45,6 +45,39 @@ class HX_Gift_Item_Coupon {
 
     // Coupon Variations
     add_action('woocommerce_applied_coupon', [$this, 'action_woocommerce_applied_coupon']);
+    add_action('wp_ajax_choose_gift_item', [$this, 'action_choose_gift_item']);
+  }
+
+  function action_choose_gift_item() {
+    $item_chosen = $_POST['item_chosen'];
+    $gift_item_code = $_POST['gift_item_code'];
+    error_log(print_r(['$gift_item_code' => $gift_item_code], true));
+
+    $cart =  WC()->cart;
+    $cart_contents = $cart->get_cart_contents();
+    $item_to_remove_key;
+    foreach ($cart_contents as $key => $value) {
+      if ($value['_hx_coupons_gift_item'] == $gift_item_code) {
+        $item_to_remove_key = $key;
+      }
+      $val_keys = array_keys($value);
+      // error_log(print_r(['$key' => $key], true));
+      // error_log(print_r(['$value[\'key\']' => $value['key']], true));
+      // error_log(print_r(['$val_keys' => $val_keys], true));
+    }
+
+    if (!$item_to_remove_key) {
+      Hexly::panic("Key for hexly gift item using code #$gift_item_code not found!");
+      wp_die(200);
+      return false;
+    }
+    
+    // error_log(print_r(['$item_to_remove_key' => $item_to_remove_key], true));
+    // $item_to_remove_key = $cart->find_product_in_cart($item_to_remove);
+    $cart->remove_cart_item($item_to_remove_key);
+    $res = $cart->add_to_cart($item_chosen);
+    Hexly::info ('$res', $res);
+    wp_die(json_encode($cart));
   }
 
   function action_woocommerce_applied_coupon($coupon_code) {
@@ -83,19 +116,15 @@ class HX_Gift_Item_Coupon {
       $children_names[] = ['name' => $pc_object->get_name(), 'id' => $pc_object->get_id()];
     }
 
-    $this->render_modal($children_names);
+    $this->render_modal($children_names, $coupon_code);
   }
 
-  function render_modal($children_names) {
-    // echo '<h1>';
-    //   foreach ($children_names as $name) {
-    //     echo "<div>$name</div>";
-    //   }
-    // echo '</h1>';
+  function render_modal($children_names, $coupon_code) {
     ?>
       <script>
+        const giftItemCode = <?php echo json_encode($coupon_code); ?>;
         const childrenNames = <?php echo json_encode($children_names); ?>;
-        console.log({ childrenNames });
+        const ajaxUrl = <?php echo json_encode(admin_url('admin-ajax.php')); ?>;
         const overlay = jQuery('<div id="modal-overlay"></div>');
         const modal = jQuery('<div id="modal"></div>');
         const modalHeader = jQuery('<div id="modal-header">Please Select One</div>');
@@ -112,6 +141,7 @@ class HX_Gift_Item_Coupon {
           jQuery('#modal').append(modalForm);
           jQuery('#modal-form').append(formContent);
           jQuery('#modal-form').append(formSubmit);
+  
           jQuery('#modal-form').submit(function(e) {
             e.preventDefault();
             const checkedField = jQuery('#modal-form input:checked').first().val();
@@ -119,6 +149,16 @@ class HX_Gift_Item_Coupon {
             if (checkedField === undefined) {
               return;
             }
+
+            const data = {
+              'action': 'choose_gift_item',
+              'gift_item_code': giftItemCode,
+              'item_chosen': checkedField
+            };
+
+            jQuery.post(ajaxUrl, data, function (res) {
+              console.log({ res });
+            })
             console.log({ checkedField });
           });
         }); 
