@@ -74,23 +74,16 @@ class HX_Gift_Item_Coupon {
     
     // error_log(print_r(['$item_to_remove_key' => $item_to_remove_key], true));
     // $item_to_remove_key = $cart->find_product_in_cart($item_to_remove);
-    $cart->remove_cart_item($item_to_remove_key);
-    $res = $cart->add_to_cart($item_chosen);
-    Hexly::info ('$res', $res);
+    $res = $cart->remove_cart_item($item_to_remove_key);
+    error_log(print_r(['$res' => $res], true));
+    $res = $cart->add_to_cart($item_chosen, 1, null, null, [self::CART_ITEM_META_COUPON => $gift_item_code]);
     wp_die(json_encode($cart));
   }
 
   function action_woocommerce_applied_coupon($coupon_code) {
     $coupon = new WC_Coupon($coupon_code);
+    $gift_item_id = $coupon->get_meta(self::META_KEY, true);
     $coupon_metadata = $coupon->get_meta_data();
-    $gift_item_id;
-
-    foreach ($coupon_metadata as $md) {
-      $_data = $md->get_data();
-      if ($_data['key'] == self::META_KEY) {
-        $gift_item_id = $_data['value'];
-      }
-    }
 
     if (empty($gift_item_id)) {
       Hexly::warn('No ' . self::META_KEY . ' found!');
@@ -439,7 +432,9 @@ class HX_Gift_Item_Coupon {
       if( $product instanceof WC_Product_Variation ){
         $vid = $product->get_id();
         $pid = $product->get_parent_id();
-      }else{
+      // } TODO: else if ($product instanceof WC_Your_Moms_Product) {
+        // Add $ci_data[self::NEEDS_VARIATION_SELECTION] = true;
+      } else{
         $vid = 0;
         $pid = $product->get_id();
       }
