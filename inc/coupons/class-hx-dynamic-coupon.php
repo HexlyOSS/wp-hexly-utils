@@ -2,13 +2,86 @@
 
 
 class HX_Dynamic_Coupon {
+
+  const META_DETAILS_KEY = '_hx_dynamic_coupon';
+
   public function __construct() {
-    add_filter('woocommerce_get_shop_coupon_data', [$this, 'filter_woocommerce_get_shop_coupon_data'], 10, 2);
+    add_filter('woocommerce_get_shop_coupon_data', [$this, 'get_dynamic_coupon'], 10, 3);
     add_action('woocommerce_thankyou', [$this, 'action_woocommerce_thankyou']);
     add_action('woocommerce_removed_coupon', [$this, 'action_woocommerce_removed_coupon']);
+
+    add_action( 'woocommerce_after_checkout_validation', [$this, 'enforce_validation'], 10, 2);
+    add_action( 'woocommerce_checkout_order_processed', [$this, 'consume_coupon'], 10, 3);
   }
 
-  function filter_woocommerce_get_shop_coupon_data($filtered, $data){
+  function enforce_validation($fields, $errors){
+    // useful for debugging early validation
+    // $errors->add( 'validation', 'Fail me!' );
+
+    // foreach ( WC()->cart->get_applied_coupons() as $code ) {
+		// 	$coupon = new WC_Coupon( $code );
+    //   $meta = $coupon->get_meta(self::META_DETAILS_KEY, true);
+    //   if( empty($meta) ){
+    //     continue;
+    //   }
+
+    //   try {
+    //     $attempt = $this->gql_redeem_hexly_coupon($code, null);
+    //     if( empty($attempt) || !$attempt->success ){
+    //       $errors->add( '_hx_dynamic_coupon_rejected:' . $code, `Coupon "$code" could not be redeemed.` );
+    //     }
+    //   }catch(Throwable $th){
+    //     Hexly::info('Failed validating dynamic coupon '. $code, $th);
+    //     $errors->add( '_hx_dynamic_coupon_failed', `Could not verify coupon(s) eligibility; please contact support.` );
+    //     $errors->add( '_hx_dynamic_coupon_failed:' . $code, `Coupon "$code" failed to be redeemed correctly.` );
+    //   }
+    // }
+    $errors = $this->find_coupon_errors(WC()->cart->get_applied_coupons() ?? [], 'redeemed', null);
+    foreach($errors as $key => $err ) {
+      $errors->add( $key, $err );
+    }
+
+  }
+
+  function consume_coupon($order_id, $posted_data, $order){
+    $errors = $this->find_coupon_errors($order->get_coupon_codes() ?? [], 'redeemed', $order);
+    if( $errors ){
+      Hexly::info("Failing order ${order_id} because of dynamic hexly coupons", ['failed_order_id' => $order_id ], $errors);
+      throw new Error('still fail');
+    }
+
+  }
+
+
+  private function find_coupon_errors($codes, $operation, $order=null ){
+    $errors = [];
+
+    foreach ($codes as $code) {
+      $coupon = new WC_Coupon( $code );
+      $meta = $coupon->get_meta(self::META_DETAILS_KEY, true);
+      if( empty($meta) ){
+        continue;
+      }
+
+      try {
+        $attempt = $this->gql_redeem_hexly_coupon($code, $order);
+        if( empty($attempt) || !$attempt->success ){
+          $errors["_hx_dynamic_coupon_{$operation}_rejected: . $code"] = `Coupon "$code" could not be $operation.`;
+          $this->clear_cached($code);
+        }
+      }catch(Throwable $th){
+        Hexly::info("Failed {$operation} dynamic coupon $code", $th);
+        $errors["_hx_dynamic_coupon_{$operation}_failed"] = `Coupon(s) failed to be $operation; please contact support.`;
+        $errors["_hx_dynamic_coupon_{$operation}_failed: . $code"] = `Coupon "$code" failed to be $operation correctly.`;
+        $this->clear_cached($code);
+      }
+    }
+
+    return $errors;
+  }
+
+
+  function get_dynamic_coupon($filtered, $data, $coupon){
     // we only run this logic if there's nothing found yet
     if ( $filtered !== false ) {
       return $filtered;
@@ -33,7 +106,7 @@ class HX_Dynamic_Coupon {
 
 
     try {
-      $result = $this->parse_details($code, $details);
+      $result = $this->parse_details($code, $details, $coupon);
       return $result;
     }catch(Throwable $err){
       Hexly::warn("Failed parsing coupon $code: " . $err->getMessage(), $details, $err);
@@ -44,7 +117,7 @@ class HX_Dynamic_Coupon {
   private function search_for_coupon($code){
     if( !WC()->session ) {
       Hexly::warn('Could not find session to cache coupon info.');
-      return $this->search_hexly_for_coupon($code);
+      return $this->gql_search_hexly_for_coupon($code);
     }
 
 
@@ -59,7 +132,7 @@ class HX_Dynamic_Coupon {
     $token = "$prefix:coupon_cache:$code";
     $cached = get_transient($token);
     if( empty($cached) ){
-      $cached = $this->search_hexly_for_coupon($code);
+      $cached = $this->gql_search_hexly_for_coupon($code);
       if( !empty($cached) ){
         set_transient($token, $cached, 60 * 2);
       }
@@ -67,19 +140,7 @@ class HX_Dynamic_Coupon {
     return $cached;
   }
 
-  private function search_hexly_for_coupon($code){
-    global $hexly_fed_graphql;
-    try {
-      $res = $hexly_fed_graphql->exec(self::QUERY, [ 'input' => [ 'code' => $code ] ]);
-      // handle error?
-      $res = $res->marketing->couponByCode ?? null;
-      return empty($res) ? null : $res;
-    } catch (\Throwable $th) {
-      Hexly::panic('Graphql Error!', $th);
-    }
-  }
-
-  private function parse_details($code, $details) {
+  private function parse_details($code, $details, $coupon) {
     $result = [
       'code' => $details->code,
       'date_created' => null,
@@ -122,7 +183,7 @@ class HX_Dynamic_Coupon {
 
       case 'FREE_PRODUCT':
         $options = $details->config->options ?? [];
-        $tid = get_option('hexly_wp_auth_integration_id') ?? 'not-found';
+        $tid = $this->get_tid();
         $def = array_filter($options, function($o) use ($tid) {
           return $o->tenantIntegrationId == $tid;
         });
@@ -133,15 +194,74 @@ class HX_Dynamic_Coupon {
         throw new Error('Could not handle coupon type for ' . $code);
     }
 
-    return $result;
+    $coupon->read_manual_coupon($code, $result);
+    $coupon->update_meta_data(self::META_DETAILS_KEY, $details);
+    return $coupon;
   }
 
-  function action_woocommerce_removed_coupon($coupon_code) {
-    Hexly::info('action_woocommerce_removed_coupon() $coupon_code', $coupon_code);
-    // TODO: Send message to hexly that the coupon code was not used? (May not be necessary)
+  function action_woocommerce_removed_coupon($code){
+      $this->clear_cached($code);
   }
 
-  const QUERY = <<<QUERY
+  private function clear_cached($code) {
+    if( !WC()->session ) {
+      return;
+    }
+
+
+    $prefix = WC()->session->get('_hx_coupon_sid');
+    if( empty($prefix) ){
+      return;
+    }
+
+    $token = "$prefix:coupon_cache:$code";
+    delete_transient($token);
+  }
+
+  private function gql_search_hexly_for_coupon($code){
+    global $hexly_fed_graphql;
+    try {
+      $tid = $this->get_tid();
+      $res = $hexly_fed_graphql->exec(self::QUERY_CODE, [ 'input' => [ 'code' => $code, 'tenantIntegrationId' => $tid ] ]);
+      // handle error?
+      $res = $res->marketing->couponByCode ?? null;
+      return empty($res) ? null : $res;
+    } catch (\Throwable $th) {
+      Hexly::panic('Graphql Error!', $th);
+    }
+  }
+
+
+  private function gql_redeem_hexly_coupon($code, $order = null){
+    global $hexly_fed_graphql;
+    try {
+      $metadata = new stdClass();
+      if( !empty($order) ){
+        $cid = $order->get_customer_id();
+        if( !empty($cid) ){
+          $metadata->customerOid = $cid;
+        }
+      }
+      $res = $hexly_fed_graphql->exec(self::MUTATION_REDEEM, [ 'input' => [
+        'dryRun' => empty($order),
+        'code' => $code,
+        'tenantIntegrationId' => $this->get_tid(),
+        'integrationOid' => empty($order) ? null : "{$order->get_id()}",
+        'metadata' => $metadata
+      ] ]);
+      // handle error?
+      $res = $res->marketing->couponRedeem ?? null;
+      return empty($res) ? null : $res;
+    } catch (\Throwable $th) {
+      Hexly::panic('Graphql Error!', $th);
+    }
+  }
+
+  private function get_tid(){
+    return intval(get_option('hexly_wp_auth_integration_id')) ?? 'not-found';
+  }
+
+  const QUERY_CODE = <<<QUERY
       query couponByCode(\$input: CouponSearchInput!) {
         marketing {
           couponByCode(input: \$input) {
@@ -155,6 +275,19 @@ class HX_Dynamic_Coupon {
           }
         }
       }
+  QUERY;
+
+  const MUTATION_REDEEM = <<<QUERY
+    mutation(\$input: CouponRedemptionInput!) {
+      marketing {
+        couponRedeem (input: \$input) {
+          success
+          message
+          error
+          metadata
+        }
+      }
+    }
   QUERY;
 
 }
