@@ -21,7 +21,7 @@ class HX_Dynamic_Coupon {
 
     $code = $data;
 
-    $details = $this->search_hexly_for_coupon($data);
+    $details = $this->search_for_coupon($data);
     if( empty($details) ){
       return $filtered;
     }
@@ -39,6 +39,32 @@ class HX_Dynamic_Coupon {
       Hexly::warn("Failed parsing coupon $code: " . $err->getMessage(), $details, $err);
       return $filtered;
     }
+  }
+
+  private function search_for_coupon($code){
+    if( !WC()->session ) {
+      Hexly::warn('Could not find session to cache coupon info.');
+      return $this->search_hexly_for_coupon($code);
+    }
+
+
+    $prefix = WC()->session->get('_hx_coupon_sid');
+    if( empty($prefix) ){
+      $prefix = wp_generate_uuid4();
+      WC()->session->set('_hx_coupon_sid', $prefix);
+    }
+
+
+
+    $token = "$prefix:coupon_cache:$code";
+    $cached = get_transient($token);
+    if( empty($cached) ){
+      $cached = $this->search_hexly_for_coupon($code);
+      if( !empty($cached) ){
+        set_transient($token, $cached, 60 * 2);
+      }
+    }
+    return $cached;
   }
 
   private function search_hexly_for_coupon($code){
