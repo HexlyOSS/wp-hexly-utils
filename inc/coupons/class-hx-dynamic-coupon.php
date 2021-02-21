@@ -202,7 +202,7 @@ class HX_Dynamic_Coupon {
 
     $coupon->read_manual_coupon($code, $result);
     $coupon->update_meta_data(self::META_DETAILS_KEY, $details);
-    apply_filters('_hx_dynamic_coupon_processed', $coupon, $details);
+    $coupon = apply_filters('_hx_dynamic_coupon_processed', $coupon, $details);
     return $coupon;
   }
 
