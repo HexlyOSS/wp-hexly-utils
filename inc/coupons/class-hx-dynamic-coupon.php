@@ -168,7 +168,13 @@ class HX_Dynamic_Coupon {
 
     switch($details->type){
       case 'FIXED_CART_AMOUNT':
-        $currency = 'USD'; // TODO @narfdre
+        $currency = 'USD'; // default
+        if( class_exists('WCPBC_Pricing_Zones') ){
+          $current_zone = wcpbc()->current_zone;
+          if(!empty($current_zone)){
+            $currency = strtoupper($zone->get_currency()); // Normalizing just in case
+          }
+        }
         $currency_mod = .01; // normalize from pennies
         $currency_dec = 2; // round to the nearest 2 dec
         $amount = $details->config->amounts->$currency ?? null;
@@ -196,6 +202,7 @@ class HX_Dynamic_Coupon {
 
     $coupon->read_manual_coupon($code, $result);
     $coupon->update_meta_data(self::META_DETAILS_KEY, $details);
+    apply_filters('_hx_dynamic_coupon_processed', $coupon, $details);
     return $coupon;
   }
 
