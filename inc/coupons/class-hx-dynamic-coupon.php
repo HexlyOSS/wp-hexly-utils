@@ -17,30 +17,10 @@ class HX_Dynamic_Coupon {
   function enforce_validation($fields, $errors){
     // useful for debugging early validation
     // $errors->add( 'validation', 'Fail me!' );
-
-    // foreach ( WC()->cart->get_applied_coupons() as $code ) {
-		// 	$coupon = new WC_Coupon( $code );
-    //   $meta = $coupon->get_meta(self::META_DETAILS_KEY, true);
-    //   if( empty($meta) ){
-    //     continue;
-    //   }
-
-    //   try {
-    //     $attempt = $this->gql_redeem_hexly_coupon($code, null);
-    //     if( empty($attempt) || !$attempt->success ){
-    //       $errors->add( '_hx_dynamic_coupon_rejected:' . $code, `Coupon "$code" could not be redeemed.` );
-    //     }
-    //   }catch(Throwable $th){
-    //     Hexly::info('Failed validating dynamic coupon '. $code, $th);
-    //     $errors->add( '_hx_dynamic_coupon_failed', `Could not verify coupon(s) eligibility; please contact support.` );
-    //     $errors->add( '_hx_dynamic_coupon_failed:' . $code, `Coupon "$code" failed to be redeemed correctly.` );
-    //   }
-    // }
     $errors = $this->find_coupon_errors(WC()->cart->get_applied_coupons() ?? [], 'redeemed', null);
     foreach($errors as $key => $err ) {
       $errors->add( $key, $err );
     }
-
   }
 
   function consume_coupon($order_id, $posted_data, $order){
@@ -82,6 +62,10 @@ class HX_Dynamic_Coupon {
 
 
   function get_dynamic_coupon($filtered, $data, $coupon){
+    if( defined('HX_DYNAMIC_COUPON_DISBALED') ){
+      return $filtered;
+    }
+
     // we only run this logic if there's nothing found yet
     if ( $filtered !== false ) {
       return $filtered;
@@ -134,7 +118,8 @@ class HX_Dynamic_Coupon {
     if( empty($cached) ){
       $cached = $this->gql_search_hexly_for_coupon($code);
       if( !empty($cached) ){
-        set_transient($token, $cached, 60 * 2);
+        $timeout = 1; // 60 * 2;
+        set_transient($token, $cached, $timeout);
       }
     }
     return $cached;
@@ -188,12 +173,17 @@ class HX_Dynamic_Coupon {
         break;
 
       case 'FREE_PRODUCT':
+        // gift-item-coupon actually processes the thing
         $options = $details->config->options ?? [];
         $tid = $this->get_tid();
-        $def = array_filter($options, function($o) use ($tid) {
+        [$def] = array_filter($options, function($o) use ($tid) {
           return $o->tenantIntegrationId == $tid;
         });
-        Hexly::info('need to handle', $def, $tid); // tODO start here
+        if( empty($def) ){
+          throw new Error('This coupon is not configured for a product in this store.');
+        }else{
+          $coupon = apply_filters('_hx_dynamic_coupon_process_free_product', $coupon, $def->productOid, $details);
+        }
         break;
 
       default:
