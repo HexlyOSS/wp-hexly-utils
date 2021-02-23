@@ -157,7 +157,7 @@ class HX_Dynamic_Coupon {
         if( class_exists('WCPBC_Pricing_Zones') ){
           $current_zone = wcpbc()->current_zone;
           if(!empty($current_zone)){
-            $currency = strtoupper($zone->get_currency()); // Normalizing just in case
+            $currency = strtoupper($current_zone->get_currency()); // Normalizing just in case
           }
         }
         $currency_mod = .01; // normalize from pennies
