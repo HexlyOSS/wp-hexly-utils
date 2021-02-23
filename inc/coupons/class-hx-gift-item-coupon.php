@@ -27,7 +27,7 @@ class HX_Gift_Item_Coupon {
     // allow coupons when cart is empty (so you can add gifts, mofos)
     add_action('woocommerce_cart_is_empty', [$this, 'coupon_empty_cart'], 10, 0);
 
-    add_action('woocommerce_applied_coupon', [$this, 'woocommerce_applied_coupon'], 10, 1 );
+    add_action('woocommerce_applied_coupon', [$this, 'woocommerce_applied_coupon'], 11, 1 );
     add_action('woocommerce_removed_coupon', [$this, 'woocommerce_removed_coupon'], 10, 1 );
 
     add_filter('woocommerce_cart_item_remove_link', [$this, 'hide_remove_cart_link'], 10, 2);
@@ -38,9 +38,26 @@ class HX_Gift_Item_Coupon {
 
     // maybe woocommerce_coupon_is_valid at macro level?
     add_filter('woocommerce_coupon_get_discount_amount', [$this, 'filter_amount'], 10, 5);
-    
+
     // Make sure our gift coupons dont apply to NON-GIFT items
     add_filter('hx_coupon_applied_to_product', [$this, 'apply_coupon'], 10, 3);
+
+    add_filter('_hx_dynamic_coupon_process_free_product', [$this, 'handle_virtual_coupon'], 10, 3);
+  }
+
+  function handle_virtual_coupon($coupon, $pid, $details){
+    $product = wc_get_product($pid);
+    if( empty($product) ){
+      throw new Error("Could not product $pid for coupon {$coupon->get_code()}");
+    }
+
+    if( $product->get_type() !== 'simple'){
+      Hexly::warn('Coupon types only support simple!');
+      throw new Error('This coupon is configured incorrectly.');
+    }
+
+    $coupon->update_meta_data(self::META_KEY, $pid);
+    return $coupon;
   }
 
   function apply_coupon($applies, $li, $coupon){
@@ -102,7 +119,6 @@ class HX_Gift_Item_Coupon {
 
     $meta = $coupon->get_meta(self::META_KEY, true);
     $meta = empty($meta) ? [] : explode(',', $meta);
-
 
     // if the item isn't a gift, but this is a gift coupon, remove the discount
     if( empty($added_by) && !empty($meta) ){
@@ -207,14 +223,13 @@ class HX_Gift_Item_Coupon {
   }
 
   function save_options( $post_id, $coupon ) {
-    $roles = $_POST[self::FIELD] ?? null;
-    if ( !empty($roles) ) {
-      $coupon->update_meta_data(self::META_KEY, implode(',', $roles));
+    $pids = $_POST[self::FIELD] ?? null;
+    if ( !empty($pids) ) {
+      $coupon->update_meta_data(self::META_KEY, implode(',', $pids));
     }else{
       $coupon->delete_meta_data(self::META_KEY);
     }
     $coupon->save_meta_data();
-
   }
 
   function is_valid($result, $coupon){
