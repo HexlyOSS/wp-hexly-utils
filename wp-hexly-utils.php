@@ -15,7 +15,7 @@ class HexlyUtilsPlugin {
   private static $instance;
   public static function get_instance() {
     if ( null == self::$instance ) {
-      try { 
+      try {
         self::$instance = new HexlyUtilsPlugin();
       }catch(Throwable $err){
         error_log( "Failed loading plugin: \n" . print_r($err, true));
@@ -60,6 +60,7 @@ class HexlyUtilsPlugin {
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/class-hexly.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/queries/class-hx-wc-query-overrides.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/audit/class-hx-audit-config.php');
+    require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/coupons/class-hx-dynamic-coupon.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/coupons/class-hx-gift-item-coupon.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/orders/items/class-hx-order-item-discount.php');
     require_once(HEXLY_UTIL_PLUGIN_PATH . 'inc/utils/class-hx-wp-plugin.php');
