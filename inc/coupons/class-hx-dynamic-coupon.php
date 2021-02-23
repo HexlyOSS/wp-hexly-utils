@@ -7,7 +7,7 @@ class HX_Dynamic_Coupon {
 
   public function __construct() {
     add_filter('woocommerce_get_shop_coupon_data', [$this, 'get_dynamic_coupon'], 10, 3);
-    add_action('woocommerce_thankyou', [$this, 'action_woocommerce_thankyou']);
+    // add_action('woocommerce_thankyou', [$this, 'action_woocommerce_thankyou']);
     add_action('woocommerce_removed_coupon', [$this, 'action_woocommerce_removed_coupon']);
 
     add_action( 'woocommerce_after_checkout_validation', [$this, 'enforce_validation'], 10, 2);
@@ -62,6 +62,9 @@ class HX_Dynamic_Coupon {
 
 
   function get_dynamic_coupon($filtered, $data, $coupon){
+    if( is_admin() ){
+	    return $filtered;
+    }
     if( defined('HX_DYNAMIC_COUPON_DISBALED') ){
       return $filtered;
     }
@@ -70,6 +73,7 @@ class HX_Dynamic_Coupon {
     if ( $filtered !== false ) {
       return $filtered;
     }
+
 
     // if the passed info isn't just a string, we're out
     if( !is_string($data) ){
@@ -90,8 +94,8 @@ class HX_Dynamic_Coupon {
 
 
     try {
-      $result = $this->parse_details($code, $details, $coupon);
-      return $result;
+	    $result = $this->parse_details($code, $details, $coupon);
+      return empty($result) ? $filtered : $result;
     }catch(Throwable $err){
       Hexly::warn("Failed parsing coupon $code: " . $err->getMessage(), $details, $err);
       return $filtered;
@@ -116,11 +120,13 @@ class HX_Dynamic_Coupon {
     $token = "$prefix:coupon_cache:$code";
     $cached = get_transient($token);
     if( empty($cached) ){
-      $cached = $this->gql_search_hexly_for_coupon($code);
+	    $cached = $this->gql_search_hexly_for_coupon($code);
       if( !empty($cached) ){
-        $timeout = 1; // 60 * 2;
+        $timeout = 60 * 2;
         set_transient($token, $cached, $timeout);
       }
+    // } else {
+	    // Hexly::info('cache hit', $cached);
     }
     return $cached;
   }
@@ -134,21 +140,21 @@ class HX_Dynamic_Coupon {
       'discount_type' => 'fixed_cart',
       'description' => 'description',
       'usage_count' => 0,
-      'individual_use' => false,
+      'individual_use' => false,
       'product_ids' => array(),
       'excluded_product_ids' => array(),
       'usage_limit' => 0,
       'usage_limit_per_user' => 1,
       'limit_usage_to_x_items' => null,
-      'free_shipping' => false,
+      'free_shipping' => false,
       'product_categories' => array(),
       'excluded_product_categories' => array(),
-      'exclude_sale_items' => false,
+      'exclude_sale_items' => false,
       'minimum_amount' => '',
       'maximum_amount' => '',
       'email_restrictions' => array(),
       'used_by' => array(),
-      'virtual' => false
+      'virtual' => false
     ];
 
     switch($details->type){
@@ -222,7 +228,8 @@ class HX_Dynamic_Coupon {
       $res = $hexly_fed_graphql->exec(self::QUERY_CODE, [ 'input' => [ 'code' => $code, 'tenantIntegrationId' => $tid ] ]);
       // handle error?
       $res = $res->marketing->couponByCode ?? null;
-      return empty($res) ? null : $res;
+      $no_result = empty($res->code ?? null);
+      return $no_result ? null : $res;
     } catch (\Throwable $th) {
       Hexly::panic('Graphql Error!', $th);
     }
