@@ -52,7 +52,7 @@ class HX_Gift_Item_Coupon {
   }
 
   function action_wp_enqueue_scripts() {
-    wp_register_script( 'gift-item-meta', HEXLY_UTIL_PLUGIN_URL . '/assets/scripts/gift-item-meta.js', null, null, true );
+    wp_enqueue_script( 'gift-item-meta', HEXLY_UTIL_PLUGIN_URL . '/assets/scripts/gift-item-meta.js', null, null, true );
   }
 
   function coupon_woocommerce_get_item_data($results, $ci_data) {
@@ -62,7 +62,7 @@ class HX_Gift_Item_Coupon {
       return $results;
     }
 
-    wp_enqueue_script( 'gift-item-meta');
+    // wp_enqueue_script( 'gift-item-meta');
     wp_add_inline_script( 'gift-item-meta', 'var params = ' . json_encode([
         'ajaxUrl' => admin_url( 'admin-ajax.php' ),
         'giftItemCode' => $code,

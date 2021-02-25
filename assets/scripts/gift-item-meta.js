@@ -1,4 +1,9 @@
-function runScript () {
+jQuery(document.body).ready(couponAjax);
+jQuery(document.body).on('applied_coupon', function () {
+  location.reload();
+});
+
+function couponAjax () {
   console.log('runScript!');
   if (typeof params === 'undefined') {
     return;
@@ -28,8 +33,7 @@ function runScript () {
 
     jQuery.post(ajaxUrl, data, function (res) {
       console.log({ res });
+      location.reload();
     })
   })
 }
-
-runScript();
