@@ -44,14 +44,49 @@ class HX_Gift_Item_Coupon {
     add_filter('hx_coupon_applied_to_product', [$this, 'apply_coupon'], 10, 3);
 
     // Coupon Variations
-    add_action('woocommerce_applied_coupon', [$this, 'action_woocommerce_applied_coupon']);
+    // add_action('woocommerce_applied_coupon', [$this, 'action_woocommerce_applied_coupon']);
     add_action('wp_ajax_choose_gift_item', [$this, 'action_choose_gift_item']);
+    // add_action('woocommerce_after_cart_table', [$this, 'action_woocommerce_after_cart_table']);
+    add_filter('woocommerce_get_item_data', [$this, 'coupon_woocommerce_get_item_data'], 11, 2);
+    add_action('wp_enqueue_scripts', [$this, 'action_wp_enqueue_scripts']);
   }
+
+  function action_wp_enqueue_scripts() {
+    wp_register_script( 'gift-item-meta', HEXLY_UTIL_PLUGIN_URL . '/assets/scripts/gift-item-meta.js', null, null, true );
+  }
+
+  function coupon_woocommerce_get_item_data($results, $ci_data) {
+    // WC()->cart->empty_cart();
+    $code = $ci_data[self::CART_ITEM_META_COUPON] ?? null;
+    if( empty($code) ) {
+      return $results;
+    }
+
+    wp_enqueue_script( 'gift-item-meta');
+    wp_add_inline_script( 'gift-item-meta', 'var params = ' . json_encode([
+        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+        'giftItemCode' => $code,
+    ]), 'before');
+
+    // $data = $ci_data['data'];
+    // $data_keys = array_keys($data->get_data());
+    // error_log(print_r(['$data_keys' => $data_keys], true));
+    $children_names = $this->get_variant_names($code);
+    wc_get_template('gift-item-meta.php', [
+      'children_names' => $children_names,
+      'coupon_code'    => $code
+    ]);
+    return $results;
+  }
+
+  // function action_woocommerce_after_cart_table() {
+  //   $this->render_modal($children_names, $coupon_code);
+  //   echo '<h1>fdafdafd</h1>';
+  // }
 
   function action_choose_gift_item() {
     $item_chosen = $_POST['item_chosen'];
     $gift_item_code = $_POST['gift_item_code'];
-    error_log(print_r(['$gift_item_code' => $gift_item_code], true));
 
     $cart =  WC()->cart;
     $cart_contents = $cart->get_cart_contents();
@@ -75,12 +110,11 @@ class HX_Gift_Item_Coupon {
     // error_log(print_r(['$item_to_remove_key' => $item_to_remove_key], true));
     // $item_to_remove_key = $cart->find_product_in_cart($item_to_remove);
     $res = $cart->remove_cart_item($item_to_remove_key);
-    error_log(print_r(['$res' => $res], true));
     $res = $cart->add_to_cart($item_chosen, 1, null, null, [self::CART_ITEM_META_COUPON => $gift_item_code]);
     wp_die(json_encode($cart));
   }
 
-  function action_woocommerce_applied_coupon($coupon_code) {
+  function get_variant_names($coupon_code) {
     $coupon = new WC_Coupon($coupon_code);
     $gift_item_id = $coupon->get_meta(self::META_KEY, true);
     $coupon_metadata = $coupon->get_meta_data();
@@ -109,31 +143,33 @@ class HX_Gift_Item_Coupon {
       $children_names[] = ['name' => $pc_object->get_name(), 'id' => $pc_object->get_id()];
     }
 
-    $this->render_modal($children_names, $coupon_code);
+    return $children_names;
   }
 
   function render_modal($children_names, $coupon_code) {
     ?>
       <script>
-        const giftItemCode = <?php echo json_encode($coupon_code); ?>;
-        const childrenNames = <?php echo json_encode($children_names); ?>;
-        const ajaxUrl = <?php echo json_encode(admin_url('admin-ajax.php')); ?>;
-        const overlay = jQuery('<div id="modal-overlay"></div>');
-        const modal = jQuery('<div id="modal"></div>');
-        const modalHeader = jQuery('<div id="modal-header">Please Select One</div>');
-        const modalForm = jQuery('<form id="modal-form"></form>');
-        const contentHTML = childrenNames.map(el => {
+        var giftItemCode = <?php echo json_encode($coupon_code); ?>;
+        var childrenNames = <?php echo json_encode($children_names); ?>;
+        var ajaxUrl = <?php echo json_encode(admin_url('admin-ajax.php')); ?>;
+        var overlay = jQuery('<div id="modal-overlay"></div>');
+        var modal = jQuery('<div id="modal"></div>');
+        var modalHeader = jQuery('<div id="modal-header">Please Select One</div>');
+        var modalForm = jQuery('<form id="modal-form"></form>');
+        console.log({ variationField });
+        var contentHTML = childrenNames.map(el => {
           return `<p><input id="form-input-${el.id}" type="radio" name="size" value="${el.id}"></input><label for="form-input-${el.id}">${el.name}</label></p>`;
         }).join('');
-        const formContent = jQuery(`<div id="form-content">${contentHTML}</div>`);
-        const formSubmit = jQuery(`<button id="form-submit">Submit</button>`);
+        var formContent = jQuery(`<div id="form-content">${contentHTML}</div>`);
+        var formSubmit = jQuery(`<button id="form-submit">Submit</button>`);
         jQuery(document).ready(function() {
-          jQuery('body').append(overlay);
-          jQuery('#modal-overlay').append(modal);
-          jQuery('#modal').append(modalHeader);
-          jQuery('#modal').append(modalForm);
-          jQuery('#modal-form').append(formContent);
-          jQuery('#modal-form').append(formSubmit);
+          variationField.append("<h1>stuff!</h1>");
+          // jQuery('body').append(overlay);
+          // jQuery('#modal-overlay').append(modal);
+          // jQuery('#modal').append(modalHeader);
+          // jQuery('#modal').append(modalForm);
+          // jQuery('#modal-form').append(formContent);
+          // jQuery('#modal-form').append(formSubmit);
   
           jQuery('#modal-form').submit(function(e) {
             e.preventDefault();
@@ -300,6 +336,7 @@ class HX_Gift_Item_Coupon {
     }
 
     $matches = $this->get_matches($cart, $coupon);
+    // Hexly::info ('$matches', $matches);
     foreach( ($matches->existing ?? []) as $m){
       [$cid, $pid, $vid, $ci_data] = $m;
       $added = $cart->remove_cart_item($cid);
@@ -424,6 +461,10 @@ class HX_Gift_Item_Coupon {
 
     foreach ($meta as $id) {
       $product = wc_get_product($id);
+      $p_class = get_class($product);
+      $p_type = $product->get_type();
+      Hexly::info ('$p_class', $p_class);
+      Hexly::info ('$p_type', $p_type);
       if( !$product ){
         Hexly::warn('Could not find coupon item to apply for id=' . $id);
         continue;
@@ -432,8 +473,10 @@ class HX_Gift_Item_Coupon {
       if( $product instanceof WC_Product_Variation ){
         $vid = $product->get_id();
         $pid = $product->get_parent_id();
-      // } TODO: else if ($product instanceof WC_Your_Moms_Product) {
-        // Add $ci_data[self::NEEDS_VARIATION_SELECTION] = true;
+      } else if ($product instanceof WC_Product_Variable) {
+        Hexly::info ('Is instance of WC_Product_Variable!');
+        $pid = $product->get_id();
+        $vid = $product->get_id();
       } else{
         $vid = 0;
         $pid = $product->get_id();
@@ -459,11 +502,11 @@ class HX_Gift_Item_Coupon {
 
 
         $already_added = $targeted && $pid_match && $vid_match;
-        // Hexly::info(
-        //   'checking',
-        //   [$pid, $vid, $t_pid, $t_vid],
-        //   [$targeted, $pid_match, $vid_match]
-        // );
+        Hexly::info(
+          'checking',
+          [$pid, $vid, $t_pid, $t_vid],
+          [$targeted, $pid_match, $vid_match]
+        );
 
         if( $already_added ){
           $found = true;
