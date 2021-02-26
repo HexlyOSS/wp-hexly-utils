@@ -1,9 +1,9 @@
-jQuery(document.body).ready(couponAjax);
+jQuery(document.body).ready(disableSubmitBtn);
 jQuery(document.body).on('applied_coupon', function () {
   location.reload();
 });
 
-function couponAjax () {
+function disableSubmitBtn () {
   if (typeof params === 'undefined') {
     return;
   }

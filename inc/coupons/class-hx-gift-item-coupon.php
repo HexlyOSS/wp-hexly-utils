@@ -49,6 +49,20 @@ class HX_Gift_Item_Coupon {
     // add_action('woocommerce_after_cart_table', [$this, 'action_woocommerce_after_cart_table']);
     add_filter('woocommerce_get_item_data', [$this, 'coupon_woocommerce_get_item_data'], 11, 2);
     add_action('wp_enqueue_scripts', [$this, 'action_wp_enqueue_scripts']);
+    add_action('woocommerce_before_checkout_form', [$this, 'action_woocommerce_before_checkout_form']);
+  }
+
+  function action_woocommerce_before_checkout_form() {
+    // See if cart has coupon gift item
+    $cart = WC()->cart->get_cart();
+    $cart_keys = array_keys($cart);
+    foreach ($cart as $key => $el) {
+      $el_type = get_class($el);
+      Hexly::info ('$key', $key);
+      Hexly::info ('$el_type', $el_type);
+    }
+    // See if it is a child variant or base (how?)
+    // Call the block submit button stuff
   }
 
   function action_wp_enqueue_scripts() {
@@ -144,87 +158,6 @@ class HX_Gift_Item_Coupon {
     }
 
     return $children_names;
-  }
-
-  function render_modal($children_names, $coupon_code) {
-    ?>
-      <script>
-        var giftItemCode = <?php echo json_encode($coupon_code); ?>;
-        var childrenNames = <?php echo json_encode($children_names); ?>;
-        var ajaxUrl = <?php echo json_encode(admin_url('admin-ajax.php')); ?>;
-        var overlay = jQuery('<div id="modal-overlay"></div>');
-        var modal = jQuery('<div id="modal"></div>');
-        var modalHeader = jQuery('<div id="modal-header">Please Select One</div>');
-        var modalForm = jQuery('<form id="modal-form"></form>');
-        console.log({ variationField });
-        var contentHTML = childrenNames.map(el => {
-          return `<p><input id="form-input-${el.id}" type="radio" name="size" value="${el.id}"></input><label for="form-input-${el.id}">${el.name}</label></p>`;
-        }).join('');
-        var formContent = jQuery(`<div id="form-content">${contentHTML}</div>`);
-        var formSubmit = jQuery(`<button id="form-submit">Submit</button>`);
-        jQuery(document).ready(function() {
-          variationField.append("<h1>stuff!</h1>");
-          // jQuery('body').append(overlay);
-          // jQuery('#modal-overlay').append(modal);
-          // jQuery('#modal').append(modalHeader);
-          // jQuery('#modal').append(modalForm);
-          // jQuery('#modal-form').append(formContent);
-          // jQuery('#modal-form').append(formSubmit);
-  
-          jQuery('#modal-form').submit(function(e) {
-            e.preventDefault();
-            const checkedField = jQuery('#modal-form input:checked').first().val();
-            
-            if (checkedField === undefined) {
-              return;
-            }
-
-            const data = {
-              'action': 'choose_gift_item',
-              'gift_item_code': giftItemCode,
-              'item_chosen': checkedField
-            };
-
-            jQuery.post(ajaxUrl, data, function (res) {
-              console.log({ res });
-            })
-            console.log({ checkedField });
-          });
-        }); 
-      </script>
-      <style>
-        #modal-overlay {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          position: fixed; 
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,.5);
-          z-index: 20000;
-        }
-
-        #modal {
-          background: white;
-          opacity: 1;
-          border-radius: 14px;
-          width: 400px;
-          height: 300px;
-        }
-
-        #modal-header {
-          color: white;
-          background: darkgray;
-        }
-
-        #form-content {
-
-        }
-
-      </style>
-    <?php
   }
 
   function apply_coupon($applies, $li, $coupon){
@@ -474,7 +407,6 @@ class HX_Gift_Item_Coupon {
         $vid = $product->get_id();
         $pid = $product->get_parent_id();
       } else if ($product instanceof WC_Product_Variable) {
-        Hexly::info ('Is instance of WC_Product_Variable!');
         $pid = $product->get_id();
         $vid = $product->get_id();
       } else{
@@ -501,7 +433,7 @@ class HX_Gift_Item_Coupon {
         $vid_match = (empty($t_vid) && empty($vid)) || (intval($t_vid) === intval($vid));
 
 
-        $already_added = $targeted && $pid_match && $vid_match;
+        $already_added = ($targeted && $pid_match && $vid_match) || ($targeted && $pid_match && $product instanceof WC_Product_Variable);
         Hexly::info(
           'checking',
           [$pid, $vid, $t_pid, $t_vid],
