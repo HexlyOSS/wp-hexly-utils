@@ -1,10 +1,10 @@
-jQuery(document.body).ready(disableSubmitBtn);
-jQuery(document.body).on('applied_coupon', function () {
-  location.reload();
-});
+// jQuery(document.body).ready(disableSubmitBtn);
+jQuery(document.body).on('country_to_state_changed', couponAjax);
+jQuery(document.body).on('country_to_state_changed', disableSubmitBtn);
 
-function disableSubmitBtn () {
+function couponAjax () {
   if (typeof params === 'undefined') {
+    console.log('gift-item.js');
     return;
   }
   var selectElement = jQuery('#gift-variants-select');
@@ -35,4 +35,16 @@ function disableSubmitBtn () {
       location.reload();
     })
   })
+}
+
+function disableSubmitBtn () {
+  if (typeof giftParams === 'undefined') {
+    return;
+  }
+  var { disabled } = giftParams
+  var placeOrderBtn = jQuery('#place_order');
+
+  placeOrderBtn.prop("disabled", disabled);
+  placeOrderBtn.css('background-color', 'lightgray');
+  placeOrderBtn.css('cursor', 'default');
 }

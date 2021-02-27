@@ -57,19 +57,37 @@ class HX_Gift_Item_Coupon {
     $cart = WC()->cart->get_cart();
     $cart_keys = array_keys($cart);
     foreach ($cart as $key => $el) {
-      $el_type = get_class($el);
-      Hexly::info ('$key', $key);
-      Hexly::info ('$el_type', $el_type);
+      $el_type = gettype($el);
+      $el_keys = array_keys($el);
+      $pid = $el['product_id'];
+      $vid = $el['variation_id'];
+
+      if ($pid == $vid) {
+        Hexly::info('Unselected Product Found!');
+        $code = $el['_hx_coupons_gift_item'];
+        wp_add_inline_script( 'gift-item-checkout-validation', 'var giftParams = ' . json_encode([
+          'disabled' => true
+        ]), 'before');
+        Hexly::info ('$code', $code);
+        break;
+      }
+      // Hexly::info ('$key', $key);
+      // Hexly::info ('$el_type', $el_type);
+      // Hexly::info ('$el_keys', $el_keys);
+      // Hexly::info ('$pid', $pid);
+      // Hexly::info ('$vid', $vid);
     }
     // See if it is a child variant or base (how?)
-    // Call the block submit button stuff
+    // Call the block submit button stuff (disable if unselected variable item still in cart)
   }
 
   function action_wp_enqueue_scripts() {
     wp_enqueue_script( 'gift-item-meta', HEXLY_UTIL_PLUGIN_URL . '/assets/scripts/gift-item-meta.js', null, null, true );
+    wp_enqueue_script( 'gift-item-checkout-validation', HEXLY_UTIL_PLUGIN_URL . '/assets/scripts/gift-item-checkout-validation.js', null, null, true );
   }
 
   function coupon_woocommerce_get_item_data($results, $ci_data) {
+    Hexly::info ('$vid', $vid);
     // WC()->cart->empty_cart();
     $code = $ci_data[self::CART_ITEM_META_COUPON] ?? null;
     if( empty($code) ) {
@@ -78,8 +96,8 @@ class HX_Gift_Item_Coupon {
 
     // wp_enqueue_script( 'gift-item-meta');
     wp_add_inline_script( 'gift-item-meta', 'var params = ' . json_encode([
-        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-        'giftItemCode' => $code,
+      'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+      'giftItemCode' => $code,
     ]), 'before');
 
     // $data = $ci_data['data'];
@@ -434,11 +452,11 @@ class HX_Gift_Item_Coupon {
 
 
         $already_added = ($targeted && $pid_match && $vid_match) || ($targeted && $pid_match && $product instanceof WC_Product_Variable);
-        Hexly::info(
-          'checking',
-          [$pid, $vid, $t_pid, $t_vid],
-          [$targeted, $pid_match, $vid_match]
-        );
+        // Hexly::info(
+        //   'checking',
+        //   [$pid, $vid, $t_pid, $t_vid],
+        //   [$targeted, $pid_match, $vid_match]
+        // );
 
         if( $already_added ){
           $found = true;
