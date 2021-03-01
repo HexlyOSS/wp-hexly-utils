@@ -4,7 +4,6 @@ jQuery(document.body).on('country_to_state_changed', disableSubmitBtn);
 
 function couponAjax () {
   if (typeof params === 'undefined') {
-    console.log('gift-item.js');
     return;
   }
   var selectElement = jQuery('#gift-variants-select');
@@ -12,9 +11,7 @@ function couponAjax () {
   if (!selectElement.length) {
     return;
   }
-  console.log({ selectElement });
   var { ajaxUrl, giftItemCode } = params;
-  console.log({ ajaxUrl, giftItemCode });
   selectElement.change(function (e) {
     e.preventDefault();
 
@@ -31,7 +28,6 @@ function couponAjax () {
     };
 
     jQuery.post(ajaxUrl, data, function (res) {
-      console.log({ res });
       location.reload();
     })
   })
@@ -43,8 +39,17 @@ function disableSubmitBtn () {
   }
   var { disabled } = giftParams
   var placeOrderBtn = jQuery('#place_order');
+  var selectElement = jQuery('#gift-variants-select');
+  var placeOrderRow = jQuery('.form-row.place-order');
+  var placeOrderWarningText = jQuery('<div>Please Complete Checkout Form!</div>');
 
   placeOrderBtn.prop("disabled", disabled);
   placeOrderBtn.css('background-color', 'lightgray');
   placeOrderBtn.css('cursor', 'default');
+
+  selectElement.css('border', 'red 3px dotted');
+
+  placeOrderRow.append(placeOrderWarningText);
+  placeOrderWarningText.css('text-align', 'center');
+  placeOrderWarningText.css('color', 'red');
 }

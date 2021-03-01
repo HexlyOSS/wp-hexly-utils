@@ -7,8 +7,6 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-// wp_enqueue_script('gift-item-meta');
-// wp_localize_script( 'gift-item-meta', 'params', [ 'giftItemCode' => $coupon_code, 'ajaxUrl' => json_encode(admin_url('admin-ajax.php'))] );
 ?>
 
 <dl>

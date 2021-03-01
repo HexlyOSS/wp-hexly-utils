@@ -44,16 +44,13 @@ class HX_Gift_Item_Coupon {
     add_filter('hx_coupon_applied_to_product', [$this, 'apply_coupon'], 10, 3);
 
     // Coupon Variations
-    // add_action('woocommerce_applied_coupon', [$this, 'action_woocommerce_applied_coupon']);
     add_action('wp_ajax_choose_gift_item', [$this, 'action_choose_gift_item']);
-    // add_action('woocommerce_after_cart_table', [$this, 'action_woocommerce_after_cart_table']);
     add_filter('woocommerce_get_item_data', [$this, 'coupon_woocommerce_get_item_data'], 11, 2);
     add_action('wp_enqueue_scripts', [$this, 'action_wp_enqueue_scripts']);
     add_action('woocommerce_before_checkout_form', [$this, 'action_woocommerce_before_checkout_form']);
   }
 
   function action_woocommerce_before_checkout_form() {
-    // See if cart has coupon gift item
     $cart = WC()->cart->get_cart();
     $cart_keys = array_keys($cart);
     foreach ($cart as $key => $el) {
@@ -63,22 +60,13 @@ class HX_Gift_Item_Coupon {
       $vid = $el['variation_id'];
 
       if ($pid == $vid) {
-        Hexly::info('Unselected Product Found!');
         $code = $el['_hx_coupons_gift_item'];
         wp_add_inline_script( 'gift-item-checkout-validation', 'var giftParams = ' . json_encode([
           'disabled' => true
         ]), 'before');
-        Hexly::info ('$code', $code);
         break;
       }
-      // Hexly::info ('$key', $key);
-      // Hexly::info ('$el_type', $el_type);
-      // Hexly::info ('$el_keys', $el_keys);
-      // Hexly::info ('$pid', $pid);
-      // Hexly::info ('$vid', $vid);
     }
-    // See if it is a child variant or base (how?)
-    // Call the block submit button stuff (disable if unselected variable item still in cart)
   }
 
   function action_wp_enqueue_scripts() {
@@ -87,22 +75,16 @@ class HX_Gift_Item_Coupon {
   }
 
   function coupon_woocommerce_get_item_data($results, $ci_data) {
-    Hexly::info ('$vid', $vid);
-    // WC()->cart->empty_cart();
     $code = $ci_data[self::CART_ITEM_META_COUPON] ?? null;
     if( empty($code) ) {
       return $results;
     }
 
-    // wp_enqueue_script( 'gift-item-meta');
     wp_add_inline_script( 'gift-item-meta', 'var params = ' . json_encode([
       'ajaxUrl' => admin_url( 'admin-ajax.php' ),
       'giftItemCode' => $code,
     ]), 'before');
 
-    // $data = $ci_data['data'];
-    // $data_keys = array_keys($data->get_data());
-    // error_log(print_r(['$data_keys' => $data_keys], true));
     $children_names = $this->get_variant_names($code);
     wc_get_template('gift-item-meta.php', [
       'children_names' => $children_names,
@@ -110,11 +92,6 @@ class HX_Gift_Item_Coupon {
     ]);
     return $results;
   }
-
-  // function action_woocommerce_after_cart_table() {
-  //   $this->render_modal($children_names, $coupon_code);
-  //   echo '<h1>fdafdafd</h1>';
-  // }
 
   function action_choose_gift_item() {
     $item_chosen = $_POST['item_chosen'];
@@ -128,9 +105,6 @@ class HX_Gift_Item_Coupon {
         $item_to_remove_key = $key;
       }
       $val_keys = array_keys($value);
-      // error_log(print_r(['$key' => $key], true));
-      // error_log(print_r(['$value[\'key\']' => $value['key']], true));
-      // error_log(print_r(['$val_keys' => $val_keys], true));
     }
 
     if (!$item_to_remove_key) {
@@ -139,11 +113,9 @@ class HX_Gift_Item_Coupon {
       return false;
     }
     
-    // error_log(print_r(['$item_to_remove_key' => $item_to_remove_key], true));
-    // $item_to_remove_key = $cart->find_product_in_cart($item_to_remove);
     $res = $cart->remove_cart_item($item_to_remove_key);
     $res = $cart->add_to_cart($item_chosen, 1, null, null, [self::CART_ITEM_META_COUPON => $gift_item_code]);
-    wp_die(json_encode($cart));
+    wp_die(200);
   }
 
   function get_variant_names($coupon_code) {
@@ -412,10 +384,6 @@ class HX_Gift_Item_Coupon {
 
     foreach ($meta as $id) {
       $product = wc_get_product($id);
-      $p_class = get_class($product);
-      $p_type = $product->get_type();
-      Hexly::info ('$p_class', $p_class);
-      Hexly::info ('$p_type', $p_type);
       if( !$product ){
         Hexly::warn('Could not find coupon item to apply for id=' . $id);
         continue;

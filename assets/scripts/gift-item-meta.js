@@ -12,9 +12,7 @@ function couponAjax () {
   if (!selectElement.length) {
     return;
   }
-  console.log({ selectElement });
   var { ajaxUrl, giftItemCode } = params;
-  console.log({ ajaxUrl, giftItemCode });
   selectElement.change(function (e) {
     e.preventDefault();
 
@@ -31,7 +29,6 @@ function couponAjax () {
     };
 
     jQuery.post(ajaxUrl, data, function (res) {
-      console.log({ res });
       location.reload();
     })
   })
