@@ -120,14 +120,24 @@ class HX_Dynamic_Coupon {
     $token = "$prefix:coupon_cache:$code";
     $cached = get_transient($token);
     if( empty($cached) ){
-	    $cached = $this->gql_search_hexly_for_coupon($code);
-      if( !empty($cached) ){
+      Hexly::debug('no cache ' . $token);
+      $cached = $this->gql_search_hexly_for_coupon($code);
+      if( empty($cached) ){
+        $timeout = 15;
+        $cached = '<null>';
+      }else{
         $timeout = 60 * 2;
-        set_transient($token, $cached, $timeout);
       }
-    // } else {
-	    // Hexly::info('cache hit', $cached);
+      $trans = set_transient($token, $cached, $timeout );
+      Hexly::debug('trans', $trans, $token, $cached, $timeout);
+    } else {
+      Hexly::debug('cache hit', $cached, empty($cached));
     }
+
+    if( $cached == '<null>' ){
+      $cached = null;
+    }
+
     return $cached;
   }
 
