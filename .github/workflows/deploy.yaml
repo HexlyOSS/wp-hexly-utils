@@ -40,6 +40,7 @@ jobs:
       env:
           AWS_ACCESS_KEY_ID: ${{ secrets.WP_PLUGINS_AWS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WP_PLUGINS_AWS_SECRET }}
+          AWS_DEFAULT_REGION: us-west-2
           BUILD_VERSION: ${{ steps.gen-build-num.outputs.build_version }}
       run: |
         sed -i -e "s/Version: .*__build-number__/Version: ${BUILD_VERSION}/" ./$PLUGIN_FILE
