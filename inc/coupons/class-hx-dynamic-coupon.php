@@ -200,6 +200,8 @@ class HX_Dynamic_Coupon {
         }else{
           $coupon = apply_filters('_hx_dynamic_coupon_process_free_product', $coupon, $def->productOid, $details);
         }
+        $result['discount_type'] = 'percent';
+        $result['amount'] = 100;
         break;
 
       default:
