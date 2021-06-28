@@ -38,8 +38,9 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.WP_PLUGINS_AWS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.WP_PLUGINS_AWS_SECRET }}
+          AWS_DEFAULT_REGION: us-west-2
           BUILD_VERSION: ${{ steps.gen-build-num.outputs.build_version }}
       run: |
         sed -i -e "s/Version: .*__build-number__/Version: ${BUILD_VERSION}/" ./$PLUGIN_FILE
@@ -47,6 +48,7 @@ jobs:
         ZIP_FILE="$PROJECT-$BUILD_VERSION.zip"
         ZIP="$BASE_DIR/$ZIP_FILE"
         bash build/zip.sh "$ZIP" "$BASE_DIR" "$PROJECT" "$BUILD_VERSION"
+        echo "Copying $ZIP to s3://plugins.hexly.cloud/wp/plugins/$PROJECT/$ZIP_FILE"
         aws s3 cp --acl public-read "$ZIP" "s3://plugins.hexly.cloud/wp/plugins/$PROJECT/$ZIP_FILE"
 
         sed -i -e "s/{{ \.ZIP_FILE }}/$ZIP_FILE/g" build/update-meta.json
