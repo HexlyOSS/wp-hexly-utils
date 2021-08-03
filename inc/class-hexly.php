@@ -208,7 +208,9 @@ if( class_exists('Logger') && interface_exists('LoggerConfigurator') ){
 
 
 
-set_error_handler(function($errno, $errstr, $errfile, $errline ){
-  Hexly::dbpr("Unhandled Error errno=$errno at " . $errfile . ':' . $errline, $errstr);
-  // throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
-}, E_ERROR | E_WARNING | E_PARSE);
+if( !defined('HEXLY_LEGACY_DISABLE_ERROR_LOG') ){
+  set_error_handler(function($errno, $errstr, $errfile, $errline ){
+    Hexly::dbpr("Unhandled Error errno=$errno at " . $errfile . ':' . $errline, $errstr);
+    // throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+  }, E_ERROR | E_WARNING | E_PARSE);
+}
