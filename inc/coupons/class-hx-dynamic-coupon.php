@@ -10,25 +10,41 @@ class HX_Dynamic_Coupon {
     // add_action('woocommerce_thankyou', [$this, 'action_woocommerce_thankyou']);
     add_action('woocommerce_removed_coupon', [$this, 'action_woocommerce_removed_coupon']);
 
-    add_action( 'woocommerce_after_checkout_validation', [$this, 'enforce_validation'], 10, 2);
-    add_action( 'woocommerce_checkout_order_processed', [$this, 'consume_coupon'], 10, 3);
+    // add_action( 'woocommerce_after_checkout_validation', [$this, 'enforce_validation'], 10, 2);
+    add_action( 'woocommerce_checkout_order_processed', [$this, 'enforce_validation'], 10, 3);
   }
 
-  function enforce_validation($fields, $errors){
+  function enforce_validation($order_id, $posted_data, $order){
     // useful for debugging early validation
     // $errors->add( 'validation', 'Fail me!' );
-    $errors = $this->find_coupon_errors(WC()->cart->get_applied_coupons() ?? [], 'redeemed', null);
-    foreach($errors as $key => $err ) {
-      $errors->add( $key, $err );
+    $errors = $this->find_coupon_errors(WC()->cart->get_applied_coupons() ?? [], 'redeemed', $order);
+    Hexly::info ('$errors', $errors);
+    // foreach($errors as $key => $err ) {
+    //   $errors_blah[] = [$key, $err];
+    // }
+
+    // hey josh, make sure this doesn't stop us from winning when we should win
+    // Hexly::info ('$errors_blah', $errors_blah);
+    if( !empty($errors) ){
+      throw new Exception( 'Could not redeem coupon(s). Please fix any errors or contact support.');  
+      // $hook = function($order_id, $checkout) use ($hook, $errors){
+      //   Hexly::info('did i even help?', $order_id);
+      //   if( $order_id !== null ){
+      //     return $order_id;
+      //   }
+      //   remove_filter('woocommerce_create_order', $hook, 10, 2);  
+      //   Hexly::info('found the errors and failing!', $errors);
+      // };
+      // add_filter('woocommerce_create_order', $hook, 10, 2);
     }
   }
 
   function consume_coupon($order_id, $posted_data, $order){
-    $errors = $this->find_coupon_errors($order->get_coupon_codes() ?? [], 'redeemed', $order);
-    if( $errors ){
-      Hexly::info("Failing order ${order_id} because of dynamic hexly coupons", ['failed_order_id' => $order_id ], $errors);
-      throw new Error('still fail');
-    }
+    // $errors = $this->find_coupon_errors($order->get_coupon_codes() ?? [], 'redeemed', $order);
+    // if( $errors ){
+    //   Hexly::info("Failing order ${order_id} because of dynamic hexly coupons", ['failed_order_id' => $order_id ], $errors);
+    //   throw new Error('still fail');
+    // }
 
   }
 
@@ -46,13 +62,13 @@ class HX_Dynamic_Coupon {
       try {
         $attempt = $this->gql_redeem_hexly_coupon($code, $order);
         if( empty($attempt) || !$attempt->success ){
-          $errors["_hx_dynamic_coupon_{$operation}_rejected: . $code"] = `Coupon "$code" could not be $operation.`;
+          $errors["_hx_dynamic_coupon_" . $operation . "_rejected:" . $code] = "Coupon '$code' could not be $operation.";
           $this->clear_cached($code);
         }
       }catch(Throwable $th){
         Hexly::info("Failed {$operation} dynamic coupon $code", $th);
-        $errors["_hx_dynamic_coupon_{$operation}_failed"] = `Coupon(s) failed to be $operation; please contact support.`;
-        $errors["_hx_dynamic_coupon_{$operation}_failed: . $code"] = `Coupon "$code" failed to be $operation correctly.`;
+        $errors["_hx_dynamic_coupon_{$operation}_failed"] = "Coupon(s) failed to be $operation; please contact support.";
+        $errors["_hx_dynamic_coupon_{$operation}_failed:" . $code] = "Coupon '$code' failed to be $operation correctly.";
         $this->clear_cached($code);
       }
     }
@@ -250,6 +266,7 @@ class HX_Dynamic_Coupon {
 
   private function gql_redeem_hexly_coupon($code, $order = null){
     global $hexly_fed_graphql;
+
     try {
       $metadata = new stdClass();
       if( !empty($order) ){
@@ -258,13 +275,19 @@ class HX_Dynamic_Coupon {
           $metadata->customerOid = $cid;
         }
       }
+      $billing_email = '';
+      if (!empty($order)) {
+        $billing_email = $order->get_billing_email();
+      }
       $res = $hexly_fed_graphql->exec(self::MUTATION_REDEEM, [ 'input' => [
         'dryRun' => empty($order),
         'code' => $code,
         'tenantIntegrationId' => $this->get_tid(),
         'integrationOid' => empty($order) ? null : "{$order->get_id()}",
-        'metadata' => $metadata
+        'metadata' => $metadata,
+        'billingEmail' => $billing_email
       ] ]);
+      Hexly::info ('$res', $res);
       // handle error?
       $res = $res->marketing->couponRedeem ?? null;
       return empty($res) ? null : $res;
