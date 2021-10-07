@@ -6,12 +6,18 @@ class HexlyAdminUi {
 		add_filter('woocommerce_screen_ids', [$this, 'include_woo_assets_on_hexly_screens']);
 		add_filter( 'is_protected_meta', [$this, 'is_protected_meta'], 999, 1 );
 
-
-
 		add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
 
-
+		// Order screen bulk actions stuff
+    foreach(['shop_order', 'shop_subscription', 'hx_recurring_order'] as $type ){
+      add_filter("bulk_actions-edit-$type", [$this, 'add_bulk_order_sync']);
+    }
   }
+
+	function add_bulk_order_sync($actions) {
+    $actions['mark_cancelled'] = __('Change status to cancelled', 'hexly');
+		return $actions;
+	}
 
 	function enqueue_scripts(){
 		if (is_admin()) {
