@@ -17,23 +17,29 @@ class Hexly {
       $printr = $printr . "\n===[start:  $itr]===\n\n" . print_r($arg, true) . "\n\n===[finish: $itr]===\n";
     }
 
+    $logged = "[$file:$line] $message $printr";
+    $should_log = apply_filters('hexly_log_default', true, $logged);
+    if (!$should_log) {
+      return;
+    }
+
     $log = Logger::getLogger('hexly-logger');
 
     switch($level) {
       case "panic":
-        $log->error("[$file:$line] $message $printr");
+        $log->error($logged);
         break;
       case "warn":
       case "warning":
       case "error":
       case "dbpr":
-        $log->error("[$file:$line] $message $printr");
+        $log->error($logged);
         break;
       case "debug":
-        $log->debug("[$file:$line] $message $printr");
+        $log->debug($logged);
         break;
       case "info":
-        $log->info("[$file:$line] $message $printr");
+        $log->info($logged);
         break;
     }
   }
