@@ -60,6 +60,7 @@ class HX_Dynamic_Coupon {
 
       try {
         $attempt = $this->gql_redeem_hexly_coupon($code, $order, $data);
+        Hexly::info($attempt);
         if( empty($attempt) || !$attempt->success ){
           $errors["_hx_dynamic_coupon_" . $operation . "_rejected:" . $code] = "Coupon '$code' could not be $operation.";
           $this->clear_cached($code);
@@ -218,7 +219,10 @@ class HX_Dynamic_Coupon {
         $result['discount_type'] = 'percent';
         $result['amount'] = 100;
         break;
-
+      case 'FIXED_CART_PERCENT':
+        $result['discount_type'] = 'percent';
+        $result['amount'] = $details->config->percentage * 100;
+        break;
       default:
         throw new Error('Could not handle coupon type for ' . $code);
     }
